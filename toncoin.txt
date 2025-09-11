@@ -1,0 +1,1550 @@
+Que es ton coin , tengo una billetera ton integrada a telegram, tengo estrellas en mi cuenta de
+telegram, quiero cobrar las consultas on line y las que no lo son por este medio, quiero también
+Fusionar ton con algorand, mi objetivo es pago de consultas y consulta virtual y o presencial
+tokenizable, Primero lugar como integró un bot de telegram con ton coin
+@CLINICA_VASER_BOT es el bot de telegram como lo integró a mi billetera y mi proyecto.
+Ayuda,e a ordenar esto, me diste esta idea, ¡Vamos a ordenar esto, DR-TAPIA! 🧠 ⚡
+Objetivo: cobrar consultas (virtuales y presenciales) desde Telegram usando TON (tu wallet ya
+integrada) y/o Telegram Stars, y dejar listo un camino para “fusionar” con Algorand.
+⸻
+1) Conceptos clave (en 60s)
+• Toncoin (TON): cripto nativa de la blockchain TON (la de Telegram). Se integra vía TON Connect
+(conectar wallets a tu app) y Wallet Pay (cobros “tipo checkout” dentro de Telegram).
+• Telegram Stars (XTR): moneda virtual dentro de Telegram para bienes/servicios digitales en bots.
+Se paga con la app store del usuario; luego tú retiras Stars a Toncoin. Cumple bien con iOS.
+• Bots/Apps de Telegram: puedes cobrar con el Bot Payments API (Stars para digitales; pasarelas
+para físicos) o con Mini Apps + TON.
+⸻
+2) Qué conviene usar según tu caso
+• Consultas online (digital): usar Telegram Stars (XTR) → compliant con iOS, UX nativa, y retiro a
+TON.
+• Consultas presenciales (servicio/“físico”): puedes usar Wallet Pay (TON) o el Bot Payments API
+con un PSP externo. Si quieres mantenerte cripto-nativo, Wallet Pay es lo más directo.
+⸻
+3) Integrar tu bot @CLINICA_VASER_BOT para cobrar
+Opción A — Cobro inmediato con Telegram Stars (XTR) (recomendado para digitales)
+1. Activa pagos en tu bot y define precios en Stars.
+2. Envía invoices con currency="XTR" y un prices array (monto en “stars”, 1 star = 1 unidad).
+3. En el webhook, valida pre_checkout_query y confirma.
+4. Monitorea balance de Stars y retira a Toncoin cuando quieras.
+Ejemplo (Node.js / Telegraf) — Invoice en Stars
+// npm i telegraf
+const { Telegraf } = require('telegraf');
+const bot = new Telegraf(process.env.BOT_TOKEN);
+bot.command('consulta_online', (ctx) => {
+return ctx.sendInvoice({
+title: 'Consulta Online',
+description: 'Videoconsulta 30 minutos',
+payload: 'consulta_online_30m',
+currency: 'XTR', // ¡Stars!
+prices: [{ label: 'Consulta', amount: 500 }] // 500 Stars
+});
+});
+// Confirma el pre-checkout
+bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
+// Recibe el pago
+bot.on('successful_payment', (ctx) => {
+// Marcar la reserva como pagada en tu DB
+ctx.reply('✅ Pago recibido. Te envío el link/calendario de la consulta.');
+});
+bot.launch();
+Opción B — Cobro en TON dentro de Telegram (Wallet Pay)
+1. Crea cuenta de Wallet Pay y obtiene credenciales.
+2. Desde tu bot, creas un checkout (TON) y el usuario paga con su wallet dentro de Telegram.
+3. Recibes webhooks de confirmación y liberas el servicio.
+Flujo típico TON (Wallet Pay)
+• /consulta_presencial → generas “orden” → Wallet Pay devuelve link/botón → usuario paga →
+webhook “paid” → confirmas turno.
+Opción C — TU web/app externa con TON Connect (si quieres landing o Mini App)
+• En tu web/mini app: botón “Conectar Wallet” con TON Connect UI; al confirmar, firmas/mandas
+el pago desde la wallet del usuario. Ideal para combos, packs o suscripciones.
+⸻
+4) “Fusionar” con Algorand (qué es factible hoy)
+No hay un puente nativo TON↔Algorand de primera parte. Lo práctico es:
+• Ruta A (operativa): aceptar en Stars/TON y convertir a ALGO con un exchange/bridge agregador
+(p.ej. Rubic, ChangeNOW) o con tu CEX de confianza mediante API.
+• Ruta B (contable): llevar una contabilidad multimoneda (TON/ALGO/fiat) y liquidar
+periódicamente en la red destino (ALGO) con tu tesorería.
+(Advertencia: riesgos de puente/MEV/KYC. Empieza por swaps manuales o API de un exchange
+conocido.)
+⸻
+5) Arquitectura mínima recomendada (texto-diagrama)
+Telegram Bot (@CLINICA_VASER_BOT)
+→ Comandos /consulta_online, /consulta_presencial, /mis_reservas
+→ Pagos:
+• Digital → Stars (XTR) → retiro a TON
+• Presencial → Wallet Pay (TON)
+→ DB (turnos, pacientes, facturas, estado pago)
+→ Calendario (Google Calendar iCal link en DM)
+→ (Opcional) Mini App: formulario, firma, comprobante
+→ (Opcional) Backend Web con TON Connect (packs, dashboard)
+⸻
+6) Esquema de productos y precios (ejemplo)
+• CONSULTA_ONLINE_30 → 500 XTR
+• CONSULTA_PRESENCIAL_BSAS → 20 TON
+• CONTROL_POSTOP → 200 XTR
+• “Bono 3 sesiones online” → 1400 XTR
+(Ajusta a tu ARPU y canje a fiat; Stars → TON vía retiro.)
+⸻
+7) Snippets útiles para que salgas ya
+Aiogram (Python) — Stars
+# pip install aiogram
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+import os
+bot = Bot(token=os.getenv("BOT_TOKEN"))
+dp = Dispatcher(bot)
+@dp.message_handler(commands=['consulta_online'])
+async def send_invoice(msg: types.Message):
+await bot.send_invoice(
+chat_id=msg.chat.id,
+title="Consulta Online 30m",
+description="Videoconsulta",
+payload="consulta_online_30m",
+provider_token="", # Vacío para Stars
+currency="XTR",
+prices=[types.LabeledPrice(label="Consulta", amount=500)]
+)
+@dp.pre_checkout_query_handler(lambda q: True)
+async def pre_checkout(pre_q: types.PreCheckoutQuery):
+await bot.answer_pre_checkout_query(pre_q.id, ok=True)
+@dp.message_handler(content_types=types.ContentTypes.SUCCESSFUL_PAYMENT)
+async def got_payment(msg: types.Message):
+# marcar pagado en tu DB
+await msg.answer("✅ Pago recibido. Te paso el enlace de agenda/Zoom.")
+if __name__ == '__main__':
+executor.start_polling(dp)
+(La clave es currency="XTR"; Telegram gestiona la compra de Stars y te refleja el balance para
+retirar a TON).
+TON Connect — botón conectar (React)
+npm i @tonconnect/ui-react
+import { TonConnectUIProvider, TonConnectButton } from '@tonconnect/ui-react';
+export default function App() {
+return (
+<TonConnectUIProvider manifestUrl="https://tu-dominio/tonconnect-manifest.json">
+<TonConnectButton />
+{/* tras conectar, muestras un botón "Pagar 20 TON" que genera la tx */}
+</TonConnectUIProvider>
+);
+}
+⸻
+8) Check-list para lanzar en 1–2 tardes
+1. Definir catálogos (online/presencial, precios XTR/TON).
+2. Configurar @CLINICA_VASER_BOT: comandos y flujo de reserva (DB + agenda).
+3. Implementar Stars (digital) con currency="XTR".
+4. Abrir Wallet Pay (presencial), probar un cobro en TON.
+5. Mensaje post-pago: envío automático de link de videollamada/ubicación.
+6. Dashboard simple: listado de pagos, estado, export CSV.
+7. Retiro Stars→TON y, si quieres ALGO, conversión puntual por exchange.
+⸻
+9) Extras con visión de futuro 😎
+• Mini App para onboarding del paciente (firma digital, consentimiento, fotos pre/pos).
+• Bundles/abonos (packs en Stars), upsell post-pago con botón inline.
+• Algorand: si creas un “voucher NFT” en Algorand, véndelo en TON (Stars/TON) y canjéalo on-
+chain en ALGO via backoffice (liquidación manual o API). Empieza simple; automatiza después.
+⸻
+Lo que quiero es también integrar mi interfaz de pagos Fiat a Cripto, y que sea panas token
+¡Vamos a ordenarlo, DR-TAPIA! 🧠 ⚡
+Te dejo un plan ejecutable para cobrar consultas online/presenciales desde Telegram usando Stars
+(XTR) y TON, con esqueleto de bot, backend y “ruta” para fiat→cripto (Panas Token) y la “fusión”
+operativa con Algorand.
+1) Qué es TON (en 20s)
+• Toncoin (TON): la cripto nativa de la blockchain TON (la del ecosistema Telegram).
+• TON Connect: estándar para “conectar wallet” en tu web/app (como “Sign in with TON”).
+• Wallet Pay: cobros tipo “checkout” en Telegram pagados con wallets TON.
+• Telegram Stars (XTR): moneda virtual para bienes/servicios digitales en bots (cumple iOS). Luego
+retiras Stars → TON.
+2) Qué usar según el tipo de consulta
+• Online (digital) → Stars (XTR). UX nativa, cumple reglas de Apple y es súper directo.
+• Presencial (servicio “físico”) → Wallet Pay (TON) (cripto-nativo) o un PSP fiat.
+• Fiat→Cripto (Panas Token) → un checkout fiat (Stripe/Adyen/Mercado Pago según tu país) que
+cargue “créditos Panas” y luego permita pagar con esos créditos en Stars/TON.
+3) Arquitectura mínima (texto-diagrama)
+Usuario en Telegram
+└─> @CLINICA_VASER_BOT
+├─ /consulta_online → Invoice Stars (XTR) → webhook pago → agenda/link
+├─ /consulta_presencial → Orden Wallet Pay (TON) → webhook pago → confirma turno
+├─ /mis_reservas → lista de turnos pagados
+└─ /precios → catálogo
+Backend (FastAPI o Node)
+├─ /orders (crea orden y precios)
+├─ /webhooks/telegram (successful_payment)
+├─ /webhooks/walletpay (TON: paid/failed)
+└─ DB: pacientes, reservas, facturación, asientos contables (TON/Stars/Fiat/ALGO)
+Mini App / Web (opcional)
+├─ TON Connect (botón Conectar Wallet)
+└─ Checkout Fiat → "Créditos Panas"
+└─ saldo interno → pagar en bot
+Contabilidad Puente
+├─ Stars→TON (retiro)
+└─ TON↔ALGO (conversión operativa por CEX/bridge externo + conciliación)
+4) Esqueleto listo (elige Node o Python). Te dejo ambos.
+A) Bot en Node.js (Telegraf) + Stars + placeholders Wallet Pay
+Estructura
+clinicabot/
+.env
+package.json
+bot.js
+backend/
+server.js
+.env
+BOT_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+PUBLIC_URL=https://tu-dominio.ngrok.app
+# Wallet Pay / TON (placeholder)
+WALLETPAY_API_KEY=poner_luego
+WALLETPAY_MERCHANT_ID=poner_luego
+package.json
+{
+"name": "clinicabot",
+"type": "module",
+"scripts": {
+"bot": "node bot.js",
+"api": "node backend/server.js"
+},
+"dependencies": {
+"dotenv": "^16.4.0",
+"express": "^4.19.2",
+"telegraf": "^4.16.3",
+"body-parser": "^1.20.2",
+"axios": "^1.7.2"
+}
+}
+bot.js
+import 'dotenv/config';
+import { Telegraf } from 'telegraf';
+import axios from 'axios';
+const bot = new Telegraf(process.env.BOT_TOKEN);
+// /start
+bot.start((ctx) =>
+ctx.reply(`¡Bienvenido a Clínica VASER!
+Comandos:
+• /consulta_online (Stars)
+• /consulta_presencial (TON)
+• /precios
+• /mis_reservas`)
+);
+// Catálogo
+bot.command('precios', (ctx) => {
+ctx.reply(`Tarifas:
+• Consulta Online 30m: 500 XTR
+• Consulta Presencial: 20 TON`);
+});
+// Stars: invoice digital
+bot.command('consulta_online', async (ctx) => {
+return ctx.sendInvoice({
+title: 'Consulta Online 30m',
+description: 'Videoconsulta de 30 minutos',
+payload: 'consulta_online_30m',
+// Para Stars no se requiere provider_token:
+provider_token: '', // vacío = Stars
+currency: 'XTR',
+prices: [{ label: 'Consulta', amount: 500 }], // 500 Stars
+need_name: true,
+need_email: true
+});
+});
+// TON Wallet Pay (placeholder): crear orden vía backend
+bot.command('consulta_presencial', async (ctx) => {
+const chatId = ctx.chat.id;
+try {
+const { data } = await axios.post(`${process.env.PUBLIC_URL}/order/ton`, {
+product: 'consulta_presencial',
+priceTON: 20,
+chatId
+});
+// data.checkout_url: link/botón generado por tu backend/provider
+await ctx.reply(`Paga tu consulta presencial (20 TON): ${data.checkout_url}`);
+} catch (e) {
+console.error(e);
+await ctx.reply('Error generando el pago TON. Intenta de nuevo.');
+}
+});
+// Pre-checkout Stars
+bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
+// Pago exitoso (Stars)
+bot.on('successful_payment', async (ctx) => {
+const pay = ctx.message.successful_payment;
+// Notifica a tu backend para marcar reserva pagada
+try {
+await axios.post(`${process.env.PUBLIC_URL}/webhooks/telegram`, {
+chatId: ctx.chat.id,
+payload: pay.invoice_payload,
+amount: pay.total_amount,
+currency: pay.currency,
+user: ctx.from
+});
+} catch {}
+await ctx.reply('✅ Pago recibido. En breve recibirás tu enlace de agenda/ubicación.');
+});
+bot.launch().then(() => console.log('Bot listo'));
+backend/server.js (Express muy simple)
+import 'dotenv/config';
+import express from 'express';
+import bodyParser from 'body-parser';
+const app = express();
+app.use(bodyParser.json());
+// Mock DB en memoria
+const ORDERS = new Map();
+// Crear orden TON (placeholder)
+app.post('/order/ton', (req, res) => {
+const { product, priceTON, chatId } = req.body;
+const id = `ORD-${Date.now()}`;
+const checkout_url = `https://pay.example/ton/checkout?order=${id}&amount=${priceTON}`;
+ORDERS.set(id, { product, priceTON, chatId, status: 'PENDING' });
+res.json({ order_id: id, checkout_url });
+});
+// Webhook Telegram (Stars pagado)
+app.post('/webhooks/telegram', (req, res) => {
+const { chatId, payload, amount, currency, user } = req.body;
+// aquí marcarías la cita como pagada y agendarías en Google Calendar
+console.log('STAR PAID', { chatId, payload, amount, currency, user });
+res.sendStatus(200);
+});
+// Webhook Wallet Pay (TON pagado) - placeholder
+app.post('/webhooks/walletpay', (req, res) => {
+const { order_id, status } = req.body;
+const ord = ORDERS.get(order_id);
+if (ord && status === 'PAID') {
+ord.status = 'PAID';
+console.log('TON PAID', ord);
+}
+res.sendStatus(200);
+});
+const PORT = 3000;
+app.listen(PORT, () => console.log(`API en :${PORT}`));
+Cómo correr
+npm i
+# En una terminal
+npm run api
+# En otra
+npm run bot
+Consejo: usa ngrok para exponer el backend y pon su URL en PUBLIC_URL. En BotFather define
+el webhook si usas modo webhook; con Telegraf en modo long-polling no hace falta para eventos
+básicos, pero para callbacks externos sí.
+⸻
+B) Bot en Python (Aiogram) + Stars + placeholders Wallet Pay
+Estructura
+clinicabot-py/
+.env
+bot.py
+backend.py
+requirements.txt
+requirements.txt
+aiogram==2.25.1
+python-dotenv==1.0.1
+fastapi==0.112.2
+uvicorn==0.30.5
+requests==2.32.3
+.env
+BOT_TOKEN=xxxxxxxxxxxxxxxxxxxx
+PUBLIC_URL=https://tu-dominio.ngrok.app
+bot.py
+import os, requests
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+from dotenv import load_dotenv
+load_dotenv()
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+PUBLIC_URL = os.getenv("PUBLIC_URL")
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
+@dp.message_handler(commands=['start'])
+async def start(msg: types.Message):
+await msg.answer("""¡Bienvenido a Clínica VASER!
+/consulta_online (Stars)
+/consulta_presencial (TON)
+/precios
+/mis_reservas""")
+@dp.message_handler(commands=['precios'])
+async def precios(msg: types.Message):
+await msg.answer("• Consulta Online 30m: 500 XTR\n• Consulta Presencial: 20 TON")
+@dp.message_handler(commands=['consulta_online'])
+async def consulta_online(msg: types.Message):
+prices = [types.LabeledPrice(label="Consulta Online 30m", amount=500)]
+await bot.send_invoice(
+chat_id=msg.chat.id,
+title="Consulta Online 30m",
+description="Videoconsulta",
+payload="consulta_online_30m",
+provider_token="", # vacío = Stars
+currency="XTR",
+prices=prices,
+need_name=True, need_email=True
+)
+@dp.pre_checkout_query_handler(lambda q: True)
+async def pre_checkout(pre_q: types.PreCheckoutQuery):
+await bot.answer_pre_checkout_query(pre_q.id, ok=True)
+@dp.message_handler(content_types=types.ContentTypes.SUCCESSFUL_PAYMENT)
+async def paid(msg: types.Message):
+pay = msg.successful_payment
+# Notificar a tu backend
+try:
+requests.post(f"{PUBLIC_URL}/webhooks/telegram", json={
+"chatId": msg.chat.id,
+"payload": pay.invoice_payload,
+"amount": pay.total_amount,
+"currency": pay.currency,
+"user": {"id": msg.from_user.id, "name": msg.from_user.full_name}
+}, timeout=5)
+except Exception as e:
+print("Webhook error:", e)
+await msg.answer("✅ Pago recibido. Te envío el enlace de agenda/ubicación.")
+@dp.message_handler(commands=['consulta_presencial'])
+async def consulta_presencial(msg: types.Message):
+try:
+r = requests.post(f"{PUBLIC_URL}/order/ton", json={
+"product": "consulta_presencial",
+"priceTON": 20,
+"chatId": msg.chat.id
+}, timeout=5)
+data = r.json()
+await msg.answer(f"Paga tu consulta presencial (20 TON): {data['checkout_url']}")
+except Exception as e:
+await msg.answer("Error generando pago TON.")
+print(e)
+if __name__ == "__main__":
+executor.start_polling(dp)
+backend.py (FastAPI simple)
+import uvicorn
+from fastapi import FastAPI, Request
+app = FastAPI()
+ORDERS = {}
+@app.post("/order/ton")
+async def order_ton(payload: dict):
+order_id = f"ORD-{len(ORDERS)+1}"
+checkout_url = f"https://pay.example/ton/checkout?order={order_id}
+&amount={payload.get('priceTON',20)}"
+ORDERS[order_id] = {**payload, "order_id": order_id, "status":"PENDING"}
+return {"order_id": order_id, "checkout_url": checkout_url}
+@app.post("/webhooks/telegram")
+async def wh_telegram(body: dict):
+# Marca pagado + agenda
+print("STAR PAID:", body)
+return {"ok": True}
+@app.post("/webhooks/walletpay")
+async def wh_walletpay(body: dict):
+order_id = body.get("order_id")
+status = body.get("status")
+if order_id in ORDERS and status == "PAID":
+ORDERS[order_id]["status"] = "PAID"
+print("TON PAID:", ORDERS[order_id])
+return {"ok": True}
+if __name__ == "__main__":
+uvicorn.run(app, host="0.0.0.0", port=3000)
+Cómo correr
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python backend.py # terminal 1
+python bot.py # terminal 2
+⸻
+5) Fiat→Cripto “Panas Token” (operativo desde ya)
+Para evitar fricción regulatoria y mantener control contable:
+1. Créditos Panas (off-chain)
+• El checkout fiat (Stripe/Adyen/Mercado Pago o PSP que te funcione) carga “Créditos Panas” en tu
+backend (1 crédito = 1 unidad contable, decide si lo pegas a USD/BOB).
+• En Telegram, el usuario puede pagar con sus Créditos Panas (tu bot descuenta y marca como
+pagado).
+• Opcional: reflejar el canje a Stars/TON si deseas liquidar on-chain.
+2. TON on-chain (opcional)
+• Puedes emitir un Jetton “Panas” (estándar token en TON). Al recargar con fiat, minteas a la wallet
+del usuario (o custodias).
+• Para Telegram, puedes seguir cobrando en Stars/Wallet Pay pero concilias internamente contra
+saldo Panas.
+3. Algorand “fusión” (hoy, vía tesorería)
+• Sin puente nativo directo TON↔ALGO. Lo práctico: conviertes periódicamente en CEX/bridge
+confiable y llevas asientos contables:
+• Ingreso: Stars/TON
+• Conversión: TON→USDT/USDC→ALGO
+• Egreso/Reserva: ALGO en tu tesorería
+• Más adelante, puedes automatizar con APIs del exchange.
+Tabla contable mínima
+id | usuario | concepto | medio | monto | moneda | hash/tx | estado | fecha
+1 | 123 | consulta_online | Stars | 500 | XTR | NA | PAID | ...
+2 | 123 | retiro | TON | 5.1 | TON | ... | DONE | ...
+3 | TESOR | swap TON→ALGO | CEX | ... | ... | ... | DONE | ...
+⸻
+6) Mini App + TON Connect (opcional, súper útil)
+Manifest tonconnect-manifest.json
+{
+"url": "https://tu-dominio",
+"name": "Clínica VASER",
+"iconUrl": "https://tu-dominio/icon.png"
+}
+React
+import { TonConnectUIProvider, TonConnectButton } from '@tonconnect/ui-react';
+export default function App() {
+return (
+<TonConnectUIProvider manifestUrl="https://tu-dominio/tonconnect-manifest.json">
+<TonConnectButton />
+{/* Tras conectar: mostrar "Pagar 20 TON" que dispara una tx desde la wallet */}
+</TonConnectUIProvider>
+);
+}
+⸻
+7) Checklist para lanzar (rápido)
+1. BotFather: crea @CLINICA_VASER_BOT y pega el token en .env.
+2. Comandos: /consulta_online, /consulta_presencial, /precios, /mis_reservas.
+3. Stars (XTR): usa currency: 'XTR' (sin provider_token). Prueba un pago real de 1–5 XTR.
+4. Wallet Pay (TON): crea la cuenta, obtén credenciales, reemplaza checkout placeholder y
+configura webhook /webhooks/walletpay.
+5. Agenda: tras successful_payment, envía link de videollamada/Google Calendar al paciente.
+6. Fiat→Créditos Panas: integra tu PSP; al pagar, aumenta saldo interno; añade /saldo.
+7. Contabilidad: export CSV diario/semana; registra retiradas Stars→TON y swaps a ALGO.
+⸻
+8) Humor + visión de futuro
+Tu bot hace “cirugía” también a la fricción de pagos: corta grasa regulatoria (Stars), sutura con
+TON, y deja a Algorand listo para la reconstrucción contable. 😎 🔧
+Más adelante: packs, suscripciones, vouchers NFT (ALGO) canjeables con pagos en TON/Stars.
+⸻
+¿Quiero primero es que todas estas ideas, y proyecto se traduzcan en una interfaz de pagos de
+moneda Fiat bolivianos, pesos chilenos, reales argentinos, sobretodo moneda Fiat local de America
+se fusionen con un token de confianza y cobro en cirugía plástica, pagos crédito de cirugía , token
+nft de cirugía, y además con solana tengo el vaser token que es nativo de la clínica ¡Vamos a meter
+bisturí en serio, DR-TAPIA! 🧠 ⚡
+Lo que planteas es un sistema de pagos híbrido Fiat–Cripto–Token propio para cirugía plástica, con
+extensiones en TON, Algorand y Solana (VASER Token). Te lo ordeno en capas, como si fueran
+planos quirúrgicos:
+⸻
+🏥 Objetivo maestro
+• Cobrar consultas y cirugías en:
+• Fiat local (Bs, ARS, CLP, BRL, etc.)
+• Cripto nativa Telegram (Stars/TON)
+• Token propio (VASER Token en Solana / Panas Token indexado).
+• Ofrecer planes de financiamiento, créditos tokenizados, e incluso NFTs de cirugía (comprobantes
+o bonos de procedimientos).
+⸻
+1) Capa Fiat → Cripto (on-ramp regional)
+Necesitas integrar PSPs locales (pasarelas fiat) que soporten LatAm:
+• Bolivia → Banco Unión / QR interoperable / Mercado Pago (cuando disponible).
+• Chile → Webpay/Transbank, Mercado Pago CL.
+• Argentina → Mercado Pago AR, Naranja X, Ualá.
+• Brasil → Pix, PagSeguro.
+👉 Con un proveedor multipaís (ej: Stripe LatAm, DLocal, Mercado Pago) puedes unificar entrada
+en BOB, ARS, CLP, BRL → conversión a USDT/USDC (stable).
+Flujo simple:
+Paciente paga en fiat local → PSP procesa → backend acredita “Créditos Panas/Clínica” →
+opcional: swap a USDT y reflejo en TON/Algorand.
+⸻
+2) Token intermedio: Panas Token (Indexado)
+• Sirve de unidad contable común (evita la locura de cada fiat).
+• 1 Panas = 1 USD (o cesta indexada).
+• Internamente: toda cirugía, consulta, crédito se tarifa en Panas.
+• El usuario paga con:
+• Fiat → se convierte a Panas.
+• TON / Stars → se convierte a Panas.
+• ALGO / Solana (VASER Token) → puenteado a Panas.
+Así logras que tu contabilidad siempre hable un idioma único.
+⸻
+3) Capa Cripto nativa (pacientes crypto-friendly)
+• TON/Stars → directo en Telegram.
+• Algorand → voucher NFT de cirugía, cupones de descuento tokenizados.
+• Solana (VASER Token) → token de fidelización y reservas quirúrgicas.
+👉 Los tres convergen a saldo Panas en tu backend.
+👉 De Panas se pagan consultas, cirugías, abonos.
+⸻
+4) NFT de Cirugía (extra visionario)
+• Cada procedimiento puede emitirse como NFT:
+• Propiedad digital única (ej: “Lipoescultura completa 2025”).
+• Transferible (puede revenderse si el paciente no usa la reserva).
+• Al canjearlo → se “quema” y queda registro histórico médico-financiero.
+• Esto en Solana/Algorand es trivial con metadatos JSON.
+⸻
+5) Interfaz de pagos (UX paciente)
+Telegram Bot (@CLINICA_VASER_BOT)
+• /consulta_online → Stars (XTR).
+• /consulta_presencial → TON Wallet Pay.
+• /cirugia_credito → Fiat PSP → saldo Panas.
+• /saldo → ver saldo Panas/VASER.
+• /nft_mis_cirugias → listar vouchers NFT.
+Web / Mini App
+• Checkout: elegir pagar en Bs, ARS, CLP, BRL, TON, ALGO, SOL.
+• Conectar Wallet: TON Connect, Algorand WalletConnect, Solana Phantom.
+• Historial: ver consultas, NFTs, créditos.
+⸻
+6) Arquitectura (texto-diagrama)
+Paciente
+→ @CLINICA_VASER_BOT / WebApp
+├─ Fiat PSP (DLocal/Mercado Pago/Stripe) → Créditos Panas
+├─ Stars/TON (Telegram) → Créditos Panas
+├─ ALGO/SOL (VASER Token) → Créditos Panas
+└─ DB/Contabilidad central (Panas indexado)
+Contabilidad
+→ “1 Panas = 1 USD”
+→ Cada pago normalizado
+→ Opcional: swap Panas→USDT/USDC en CEX → Tesorería Algorand/Solana
+NFT Layer
+→ Procedimientos tokenizados como NFT (voucher, prueba de compra, historial).
+⸻
+7) Roadmap quirúrgico 🗂
+Fase 1 (rápida):
+• Implementar Stars (online) + TON Wallet Pay (presencial).
+• Conectar un PSP regional → Fiat→Créditos Panas.
+• Tu backend hace de contabilidad en Panas.
+Fase 2:
+• Emitir Panas Token en TON (Jetton).
+• Bridge manual a Solana (VASER Token) y Algorand.
+• Pacientes tech pueden pagar directamente en ALGO o SOL.
+Fase 3:
+• Crear NFTs de cirugías → reserva de procedimientos.
+• Packs/bonos quirúrgicos tokenizados.
+⸻
+8) Slogan con humor 😎
+“Donde otros ven bisturí, nosotros vemos smart contracts.
+Cada cirugía, un token; cada pago, una nueva cadena de confianza.”
+⸻
+¿Quieres que te prepare el primer esquema de backend en FastAPI con tabla de “Créditos Panas”,
+integración Fiat (mock), Stars y TON, para que tengas ya un MVP técnico corriendo? Elabora con
+esto los,pasos del,proyecto un road map inicial , @Panas_token_bot, @vaser_plastic_surgeon_bot
+@dr_tapia_bot @Dr_delaTV_bot esta idea me la diste ¡Vamos a bisturí y roadmap, DR-TAPIA! 🧠
+⚡
+Te dejo un plan ejecutable, en fases cortas, con entregables, criterios de aceptación, endpoints base
+y checklist. Minimalista para salir cobrando ya, pero escalable a Panas Token + VASER (Solana) +
+Algorand + NFTs.
+Fase 0 — Preparación (Día 0–1)
+Objetivo: entorno listo y dominios de pago definidos.
+Tareas
+• Crear repo mono (apps: bot/, api/, web/).
+• Variables .env (sin secretos en git):
+• BOT_TOKEN, PUBLIC_URL, DB_URL, TZ=America/La_Paz
+• WALLETPAY_API_KEY, WALLETPAY_MERCHANT_ID (más adelante)
+• PSP_* (cuando entres a fiat)
+• Infra local: Docker (Postgres + Redis), ngrok para webhooks.
+Criterios de aceptación
+• docker compose up levanta DB/Redis.
+• Bot responde /start y /precios.
+⸻
+Fase 1 — Cobro digital con Telegram Stars (XTR) (Día 1–2)
+Objetivo: cobrar consulta online con Stars (cumple iOS) y registrar en DB.
+Entregables
+• Comando /consulta_online → sendInvoice(currency='XTR').
+• Webhook successful_payment → crear reserva (DB) y enviar link de agenda (Zoom/Meet) al
+paciente.
+• Tabla mínima:
+• payments(id, user_id, method, amount, currency, status, created_at)
+• bookings(id, user_id, product_code, status, scheduled_at, notes)
+Criterios de aceptación
+• Pago real de prueba (1–5 XTR) y registro en DB.
+• Mensaje automático “✅ Pago recibido…”.
+KPI inicial
+• % facturas pagadas / emitidas.
+• Tiempo desde pago a confirmación (< 5 s).
+⸻
+Fase 2 — Cobro presencial con TON (Wallet Pay) (Día 2–3)
+Objetivo: cobrar consulta presencial en TON, dentro de Telegram.
+Entregables
+• Endpoint POST /order/ton → crea orden y genera checkout_url.
+• Webhook /webhooks/walletpay → marca PAID y confirma turno.
+Criterios de aceptación
+• Flujo: /consulta_presencial → link de pago TON → webhook PAID → reserva confirmada.
+Riesgos y control
+• Desincronización webhook: reintentos idempotentes por order_id.
+⸻
+Fase 3 — Fiat → Créditos Panas (Día 3–5)
+Objetivo: aceptar fiat local (Bs, ARS, CLP, BRL) con un PSP regional y normalizar a “Créditos
+Panas” (1 Panas ≈ 1 USD o tu cesta indexada).
+Entregables
+• Endpoint POST /fiat/topup (PSP callback simulado) → ledger interno:
+• ledger(id, user_id, type[TOPUP|DEBIT|REFUND|SWAP], amount, asset[PANAS|XTR|TON|
+ALGO|SOL|FIAT], ref, created_at)
+• Comando /saldo en bot.
+• Comando /pagar_con_creditos <producto>.
+Criterios de aceptación
+• Pago fiat de prueba (sandbox PSP) → saldo Panas sube → compra con saldo.
+Notas
+• Contabilidad: todo se contabiliza en Panas (unidad común).
+• Canje: Stars/TON/Fiat → asiento TOPUP en Panas.
+⸻
+Fase 4 — Mini App / Web con TON Connect (Semana 2)
+Objetivo: una UI simple para ver saldo, conectar wallet TON y pagar packs.
+Entregables
+• web/ (Next.js) con botón TonConnectButton y tonconnect-manifest.json.
+• Flujo: conectar → firmar pago (20 TON) → backend valida → asienta DEBIT y emite
+comprobante.
+Criterios de aceptación
+• Pagar un “Pack online” desde web y reflejarse en ledger/bookings.
+⸻
+Fase 5 — Panas Token on-chain (Jetton TON) (Semana 2–3)
+Objetivo: reflejar el saldo Panas on-chain opcionalmente.
+Entregables
+• Jetton “PANAS” (suministro controlado por tesorería).
+• POST /mint/panas (admin) para mintear a una wallet cuando recargues por fiat (o custodio).
+• Mapear 1 Panas on-chain ≈ 1 Panas contable (concilias en cierres).
+Criterios de aceptación
+• Minteo de prueba a wallet TON y quema al consumir (si usas on-chain directo).
+Riesgos
+• Volatilidad/coste de gas (bajo en TON, pero registrarlo).
+⸻
+Fase 6 — NFT de Cirugía (voucher/canje) (Semana 3)
+Objetivo: tokenizar procedimientos como vouchers NFT (canjeables, transferibles).
+Entregables
+• Esquema de metadatos: procedure, clinic, date_range, terms, patient_id(hash).
+• POST /nft/mint (admin) → emite NFT en Solana o Algorand (elige primero uno).
+• Bot: /nft_mis_cirugias lista y /canjear_nft <id> (marca “redeemed”).
+Criterios de aceptación
+• NFT minteado, visible en wallet, y canjeado en clínica (cambia estado DB y on-chain si aplica).
+⸻
+Fase 7 — Algorand & Solana (VASER) integración operativa (Semana 3–4)
+Objetivo: “fusión” práctica vía tesorería y contabilidad, sin puentes complejos.
+Entregables
+• POST /swap/cex (mock) para asentar conversiones TON↔USDT↔ALGO/SOL con hash/receipt.
+• Aceptar VASER (Solana) como medio de pago → TOPUP Panas (tasa oráculo interno).
+Criterios de aceptación
+• Recibir VASER → reflejar saldo Panas y pagar un procedimiento.
+Riesgos
+• Cumplimiento/AML: límites por KYC, montos máximos sin verificación.
+⸻
+Fase 8 — Reportes & Compliance (perenne)
+Entregables
+• Export CSV: payments, ledger, bookings, swaps.
+• Dashboard (tabla + filtros) con KPIs:
+• Conversión (invoice→pago), tiempo liquidación, % fallos, fee efectivo, % devoluciones.
+• Políticas de reembolso/chargeback y conciliación diaria.
+⸻
+Arquitectura (texto-diagrama)
+Paciente ─ Telegram (@CLINICA_VASER_BOT) ───────────────┐
+└─ Web/MiniApp (TON Connect) │
+▼
+┌──────────── Backend API ────────────┐
+│ Orders/Payments/Bookings/Ledger │
+│ Webhooks: Telegram, WalletPay, PSP │
+│ Oráculos de tasa interna (Panas) │
+└────────────────┬────────────────────┘
+│
+┌────────── TON (Stars/WalletPay/Jetton PANAS) ───────┐
+│ │
+Algorand (NFT/ALGO) Solana (VASER)
+└─────────── Conversión operativa (CEX/API) ──────────┘
+⸻
+Modelo de datos (mínimo viable)
+users(id, tg_id, name, email, kyc_level, created_at)
+products(code, title, type[ONLINE|PRESENCIAL|PACK|NFT], price_panas)
+payments(id, user_id, method[XTR|TON|FIAT|ALGO|SOL], amount, currency, status, ext_ref,
+created_at)
+bookings(id, user_id, product_code, status[PENDING|PAID|SCHEDULED|DONE|REFUNDED],
+scheduled_at, notes)
+ledger(id, user_id, type[TOPUP|DEBIT|REFUND|SWAP], amount, asset[PANAS|XTR|TON|
+ALGO|SOL|FIAT], ref, created_at)
+nfts(id, chain, mint_addr, owner_wallet, product_code, status[MINTED|TRANSFERRED|
+REDEEMED], meta_json, created_at)
+⸻
+Endpoints base (FastAPI/Express)
+• POST /orders {product_code, user_id} → {order_id, amount_panas}
+• POST /order/ton {product, priceTON, chatId} → {checkout_url}
+• POST /fiat/create-checkout {amount_fiat, currency} → {psp_url}
+• POST /webhooks/telegram (successful_payment Stars)
+• POST /webhooks/walletpay (TON paid)
+• POST /webhooks/psp (Fiat paid → TOPUP Panas)
+• GET /ledger/:user_id
+• Admin:
+• POST /mint/panas
+• POST /nft/mint
+• POST /swap/cex
+⸻
+Seguridad & Cumplimiento (quirófano estéril)
+• Idempotencia en webhooks (por order_id/invoice_payload).
+• HMAC en webhooks entrantes (PSP/Wallet Pay).
+• Least privilege para API keys (rotación trimestral).
+• KYC por umbrales (ej. > 500 USD/mes → verificación básica).
+• Trazabilidad: toda operación genera asiento ledger.
+⸻
+Riesgos & mitigación (registro rápido)
+• Caída de PSP/WalletPay → fallback a otro método / reintento 5× exponencial.
+• Desalineo contable on/off-chain → conciliación diaria + hash de lote.
+• Fraude/reembolso → límites por usuario, cool-down, lista caliente.
+⸻
+KPIs de lanzamiento
+• T1 Conversión (invoice→pago) ≥ 70% (digital).
+• T2 Latencia confirmación < 5 s.
+• T3 Costo efectivo por cobro (fee total) < 3%.
+• T4 Tickets cerrados (pago→turno agendado) ≥ 90% en 24 h.
+• T5 Reembolsos/chargebacks < 1%.
+⸻
+Cronograma sugerido (2–3 semanas)
+• Semana 1: Fase 1–2 (Stars + TON Wallet Pay) + DB + agenda.
+• Semana 2: Fase 3–4 (Fiat→Panas + Web TON Connect).
+• Semana 3: Fase 5–7 (Jetton Panas, NFT voucher, VASER/Algorand operativos), Reports.
+⸻
+Siguiente bisturí (pasos inmediatos)
+1. Crear repo y carpetas bot/, api/, web/.
+2. Cargar mi snippet de Stars (ya lo tienes) y probar pago de 1–5 XTR.
+3. Solicitar credenciales de Wallet Pay y reemplazar el checkout placeholder.
+4. Elegir un PSP regional (DLocal/Mercado Pago/Stripe LatAm) y activar sandbox.
+5. Definir catálogo inicial (3–5 productos) con precio en Panas y equivalencias.
+Si quieres, en el próximo paso te dejo el esqueleto de FastAPI con tablas (SQLAlchemy), endpoints
+exactos y pruebas con pytest para que lo corras de una. Y le metemos el toque Panas: “cada pago,
+una sutura perfecta”. 😎 🧵
+Que es ton coin , tengo una billetera ton integrada a telegram, tengo estrellas en mi cuenta de
+telegram, quiero cobrar las consultas on line y las que no lo son por este medio, quiero también
+Fusionar ton con algorand, mi objetivo es pago de consultas y consulta virtual y o presencial
+tokenizable, Primero lugar como integró un bot de telegram con ton coin
+@CLINICA_VASER_BOT es el bot de telegram como lo integró a mi billetera y mi proyecto.
+Ayuda,e a ordenar esto, me diste esta idea, ¡Vamos a ordenar esto, DR-TAPIA! 🧠 ⚡
+Objetivo: cobrar consultas (virtuales y presenciales) desde Telegram usando TON (tu wallet ya
+integrada) y/o Telegram Stars, y dejar listo un camino para “fusionar” con Algorand.
+⸻
+1) Conceptos clave (en 60s)
+• Toncoin (TON): cripto nativa de la blockchain TON (la de Telegram). Se integra vía TON Connect
+(conectar wallets a tu app) y Wallet Pay (cobros “tipo checkout” dentro de Telegram).
+• Telegram Stars (XTR): moneda virtual dentro de Telegram para bienes/servicios digitales en bots.
+Se paga con la app store del usuario; luego tú retiras Stars a Toncoin. Cumple bien con iOS.
+• Bots/Apps de Telegram: puedes cobrar con el Bot Payments API (Stars para digitales; pasarelas
+para físicos) o con Mini Apps + TON.
+⸻
+2) Qué conviene usar según tu caso
+• Consultas online (digital): usar Telegram Stars (XTR) → compliant con iOS, UX nativa, y retiro a
+TON.
+• Consultas presenciales (servicio/“físico”): puedes usar Wallet Pay (TON) o el Bot Payments API
+con un PSP externo. Si quieres mantenerte cripto-nativo, Wallet Pay es lo más directo.
+⸻
+3) Integrar tu bot @CLINICA_VASER_BOT para cobrar
+Opción A — Cobro inmediato con Telegram Stars (XTR) (recomendado para digitales)
+1. Activa pagos en tu bot y define precios en Stars.
+2. Envía invoices con currency="XTR" y un prices array (monto en “stars”, 1 star = 1 unidad).
+3. En el webhook, valida pre_checkout_query y confirma.
+4. Monitorea balance de Stars y retira a Toncoin cuando quieras.
+Ejemplo (Node.js / Telegraf) — Invoice en Stars
+// npm i telegraf
+const { Telegraf } = require('telegraf');
+const bot = new Telegraf(process.env.BOT_TOKEN);
+bot.command('consulta_online', (ctx) => {
+return ctx.sendInvoice({
+title: 'Consulta Online',
+description: 'Videoconsulta 30 minutos',
+payload: 'consulta_online_30m',
+currency: 'XTR', // ¡Stars!
+prices: [{ label: 'Consulta', amount: 500 }] // 500 Stars
+});
+});
+// Confirma el pre-checkout
+bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
+// Recibe el pago
+bot.on('successful_payment', (ctx) => {
+// Marcar la reserva como pagada en tu DB
+ctx.reply('✅ Pago recibido. Te envío el link/calendario de la consulta.');
+});
+bot.launch();
+Opción B — Cobro en TON dentro de Telegram (Wallet Pay)
+1. Crea cuenta de Wallet Pay y obtiene credenciales.
+2. Desde tu bot, creas un checkout (TON) y el usuario paga con su wallet dentro de Telegram.
+3. Recibes webhooks de confirmación y liberas el servicio.
+Flujo típico TON (Wallet Pay)
+• /consulta_presencial → generas “orden” → Wallet Pay devuelve link/botón → usuario paga →
+webhook “paid” → confirmas turno.
+Opción C — TU web/app externa con TON Connect (si quieres landing o Mini App)
+• En tu web/mini app: botón “Conectar Wallet” con TON Connect UI; al confirmar, firmas/mandas
+el pago desde la wallet del usuario. Ideal para combos, packs o suscripciones.
+⸻
+4) “Fusionar” con Algorand (qué es factible hoy)
+No hay un puente nativo TON↔Algorand de primera parte. Lo práctico es:
+• Ruta A (operativa): aceptar en Stars/TON y convertir a ALGO con un exchange/bridge agregador
+(p.ej. Rubic, ChangeNOW) o con tu CEX de confianza mediante API.
+• Ruta B (contable): llevar una contabilidad multimoneda (TON/ALGO/fiat) y liquidar
+periódicamente en la red destino (ALGO) con tu tesorería.
+(Advertencia: riesgos de puente/MEV/KYC. Empieza por swaps manuales o API de un exchange
+conocido.)
+⸻
+5) Arquitectura mínima recomendada (texto-diagrama)
+Telegram Bot (@CLINICA_VASER_BOT)
+→ Comandos /consulta_online, /consulta_presencial, /mis_reservas
+→ Pagos:
+• Digital → Stars (XTR) → retiro a TON
+• Presencial → Wallet Pay (TON)
+→ DB (turnos, pacientes, facturas, estado pago)
+→ Calendario (Google Calendar iCal link en DM)
+→ (Opcional) Mini App: formulario, firma, comprobante
+→ (Opcional) Backend Web con TON Connect (packs, dashboard)
+⸻
+6) Esquema de productos y precios (ejemplo)
+• CONSULTA_ONLINE_30 → 500 XTR
+• CONSULTA_PRESENCIAL_BSAS → 20 TON
+• CONTROL_POSTOP → 200 XTR
+• “Bono 3 sesiones online” → 1400 XTR
+(Ajusta a tu ARPU y canje a fiat; Stars → TON vía retiro.)
+⸻
+7) Snippets útiles para que salgas ya
+Aiogram (Python) — Stars
+# pip install aiogram
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+import os
+bot = Bot(token=os.getenv("BOT_TOKEN"))
+dp = Dispatcher(bot)
+@dp.message_handler(commands=['consulta_online'])
+async def send_invoice(msg: types.Message):
+await bot.send_invoice(
+chat_id=msg.chat.id,
+title="Consulta Online 30m",
+description="Videoconsulta",
+payload="consulta_online_30m",
+provider_token="", # Vacío para Stars
+currency="XTR",
+prices=[types.LabeledPrice(label="Consulta", amount=500)]
+)
+@dp.pre_checkout_query_handler(lambda q: True)
+async def pre_checkout(pre_q: types.PreCheckoutQuery):
+await bot.answer_pre_checkout_query(pre_q.id, ok=True)
+@dp.message_handler(content_types=types.ContentTypes.SUCCESSFUL_PAYMENT)
+async def got_payment(msg: types.Message):
+# marcar pagado en tu DB
+await msg.answer("✅ Pago recibido. Te paso el enlace de agenda/Zoom.")
+if __name__ == '__main__':
+executor.start_polling(dp)
+(La clave es currency="XTR"; Telegram gestiona la compra de Stars y te refleja el balance para
+retirar a TON).
+TON Connect — botón conectar (React)
+npm i @tonconnect/ui-react
+import { TonConnectUIProvider, TonConnectButton } from '@tonconnect/ui-react';
+export default function App() {
+return (
+<TonConnectUIProvider manifestUrl="https://tu-dominio/tonconnect-manifest.json">
+<TonConnectButton />
+{/* tras conectar, muestras un botón "Pagar 20 TON" que genera la tx */}
+</TonConnectUIProvider>
+);
+}
+⸻
+8) Check-list para lanzar en 1–2 tardes
+1. Definir catálogos (online/presencial, precios XTR/TON).
+2. Configurar @CLINICA_VASER_BOT: comandos y flujo de reserva (DB + agenda).
+3. Implementar Stars (digital) con currency="XTR".
+4. Abrir Wallet Pay (presencial), probar un cobro en TON.
+5. Mensaje post-pago: envío automático de link de videollamada/ubicación.
+6. Dashboard simple: listado de pagos, estado, export CSV.
+7. Retiro Stars→TON y, si quieres ALGO, conversión puntual por exchange.
+⸻
+9) Extras con visión de futuro 😎
+• Mini App para onboarding del paciente (firma digital, consentimiento, fotos pre/pos).
+• Bundles/abonos (packs en Stars), upsell post-pago con botón inline.
+• Algorand: si creas un “voucher NFT” en Algorand, véndelo en TON (Stars/TON) y canjéalo on-
+chain en ALGO via backoffice (liquidación manual o API). Empieza simple; automatiza después.
+⸻
+Lo que quiero es también integrar mi interfaz de pagos Fiat a Cripto, y que sea panas token
+¡Vamos a ordenarlo, DR-TAPIA! 🧠 ⚡
+Te dejo un plan ejecutable para cobrar consultas online/presenciales desde Telegram usando Stars
+(XTR) y TON, con esqueleto de bot, backend y “ruta” para fiat→cripto (Panas Token) y la “fusión”
+operativa con Algorand.
+1) Qué es TON (en 20s)
+• Toncoin (TON): la cripto nativa de la blockchain TON (la del ecosistema Telegram).
+• TON Connect: estándar para “conectar wallet” en tu web/app (como “Sign in with TON”).
+• Wallet Pay: cobros tipo “checkout” en Telegram pagados con wallets TON.
+• Telegram Stars (XTR): moneda virtual para bienes/servicios digitales en bots (cumple iOS). Luego
+retiras Stars → TON.
+2) Qué usar según el tipo de consulta
+• Online (digital) → Stars (XTR). UX nativa, cumple reglas de Apple y es súper directo.
+• Presencial (servicio “físico”) → Wallet Pay (TON) (cripto-nativo) o un PSP fiat.
+• Fiat→Cripto (Panas Token) → un checkout fiat (Stripe/Adyen/Mercado Pago según tu país) que
+cargue “créditos Panas” y luego permita pagar con esos créditos en Stars/TON.
+3) Arquitectura mínima (texto-diagrama)
+Usuario en Telegram
+└─> @CLINICA_VASER_BOT
+├─ /consulta_online → Invoice Stars (XTR) → webhook pago → agenda/link
+├─ /consulta_presencial → Orden Wallet Pay (TON) → webhook pago → confirma turno
+├─ /mis_reservas → lista de turnos pagados
+└─ /precios → catálogo
+Backend (FastAPI o Node)
+├─ /orders (crea orden y precios)
+├─ /webhooks/telegram (successful_payment)
+├─ /webhooks/walletpay (TON: paid/failed)
+└─ DB: pacientes, reservas, facturación, asientos contables (TON/Stars/Fiat/ALGO)
+Mini App / Web (opcional)
+├─ TON Connect (botón Conectar Wallet)
+└─ Checkout Fiat → "Créditos Panas"
+└─ saldo interno → pagar en bot
+Contabilidad Puente
+├─ Stars→TON (retiro)
+└─ TON↔ALGO (conversión operativa por CEX/bridge externo + conciliación)
+4) Esqueleto listo (elige Node o Python). Te dejo ambos.
+A) Bot en Node.js (Telegraf) + Stars + placeholders Wallet Pay
+Estructura
+clinicabot/
+.env
+package.json
+bot.js
+backend/
+server.js
+.env
+BOT_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+PUBLIC_URL=https://tu-dominio.ngrok.app
+# Wallet Pay / TON (placeholder)
+WALLETPAY_API_KEY=poner_luego
+WALLETPAY_MERCHANT_ID=poner_luego
+package.json
+{
+"name": "clinicabot",
+"type": "module",
+"scripts": {
+"bot": "node bot.js",
+"api": "node backend/server.js"
+},
+"dependencies": {
+"dotenv": "^16.4.0",
+"express": "^4.19.2",
+"telegraf": "^4.16.3",
+"body-parser": "^1.20.2",
+"axios": "^1.7.2"
+}
+}
+bot.js
+import 'dotenv/config';
+import { Telegraf } from 'telegraf';
+import axios from 'axios';
+const bot = new Telegraf(process.env.BOT_TOKEN);
+// /start
+bot.start((ctx) =>
+ctx.reply(`¡Bienvenido a Clínica VASER!
+Comandos:
+• /consulta_online (Stars)
+• /consulta_presencial (TON)
+• /precios
+• /mis_reservas`)
+);
+// Catálogo
+bot.command('precios', (ctx) => {
+ctx.reply(`Tarifas:
+• Consulta Online 30m: 500 XTR
+• Consulta Presencial: 20 TON`);
+});
+// Stars: invoice digital
+bot.command('consulta_online', async (ctx) => {
+return ctx.sendInvoice({
+title: 'Consulta Online 30m',
+description: 'Videoconsulta de 30 minutos',
+payload: 'consulta_online_30m',
+// Para Stars no se requiere provider_token:
+provider_token: '', // vacío = Stars
+currency: 'XTR',
+prices: [{ label: 'Consulta', amount: 500 }], // 500 Stars
+need_name: true,
+need_email: true
+});
+});
+// TON Wallet Pay (placeholder): crear orden vía backend
+bot.command('consulta_presencial', async (ctx) => {
+const chatId = ctx.chat.id;
+try {
+const { data } = await axios.post(`${process.env.PUBLIC_URL}/order/ton`, {
+product: 'consulta_presencial',
+priceTON: 20,
+chatId
+});
+// data.checkout_url: link/botón generado por tu backend/provider
+await ctx.reply(`Paga tu consulta presencial (20 TON): ${data.checkout_url}`);
+} catch (e) {
+console.error(e);
+await ctx.reply('Error generando el pago TON. Intenta de nuevo.');
+}
+});
+// Pre-checkout Stars
+bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
+// Pago exitoso (Stars)
+bot.on('successful_payment', async (ctx) => {
+const pay = ctx.message.successful_payment;
+// Notifica a tu backend para marcar reserva pagada
+try {
+await axios.post(`${process.env.PUBLIC_URL}/webhooks/telegram`, {
+chatId: ctx.chat.id,
+payload: pay.invoice_payload,
+amount: pay.total_amount,
+currency: pay.currency,
+user: ctx.from
+});
+} catch {}
+await ctx.reply('✅ Pago recibido. En breve recibirás tu enlace de agenda/ubicación.');
+});
+bot.launch().then(() => console.log('Bot listo'));
+backend/server.js (Express muy simple)
+import 'dotenv/config';
+import express from 'express';
+import bodyParser from 'body-parser';
+const app = express();
+app.use(bodyParser.json());
+// Mock DB en memoria
+const ORDERS = new Map();
+// Crear orden TON (placeholder)
+app.post('/order/ton', (req, res) => {
+const { product, priceTON, chatId } = req.body;
+const id = `ORD-${Date.now()}`;
+const checkout_url = `https://pay.example/ton/checkout?order=${id}&amount=${priceTON}`;
+ORDERS.set(id, { product, priceTON, chatId, status: 'PENDING' });
+res.json({ order_id: id, checkout_url });
+});
+// Webhook Telegram (Stars pagado)
+app.post('/webhooks/telegram', (req, res) => {
+const { chatId, payload, amount, currency, user } = req.body;
+// aquí marcarías la cita como pagada y agendarías en Google Calendar
+console.log('STAR PAID', { chatId, payload, amount, currency, user });
+res.sendStatus(200);
+});
+// Webhook Wallet Pay (TON pagado) - placeholder
+app.post('/webhooks/walletpay', (req, res) => {
+const { order_id, status } = req.body;
+const ord = ORDERS.get(order_id);
+if (ord && status === 'PAID') {
+ord.status = 'PAID';
+console.log('TON PAID', ord);
+}
+});
+res.sendStatus(200);
+const PORT = 3000;
+app.listen(PORT, () => console.log(`API en :${PORT}`));
+Cómo correr
+npm i
+# En una terminal
+npm run api
+# En otra
+npm run bot
+Consejo: usa ngrok para exponer el backend y pon su URL en PUBLIC_URL. En BotFather define
+el webhook si usas modo webhook; con Telegraf en modo long-polling no hace falta para eventos
+básicos, pero para callbacks externos sí.
+⸻
+B) Bot en Python (Aiogram) + Stars + placeholders Wallet Pay
+Estructura
+clinicabot-py/
+.env
+bot.py
+backend.py
+requirements.txt
+requirements.txt
+aiogram==2.25.1
+python-dotenv==1.0.1
+fastapi==0.112.2
+uvicorn==0.30.5
+requests==2.32.3
+.env
+BOT_TOKEN=xxxxxxxxxxxxxxxxxxxx
+PUBLIC_URL=https://tu-dominio.ngrok.app
+bot.py
+import os, requests
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+from dotenv import load_dotenv
+load_dotenv()
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+PUBLIC_URL = os.getenv("PUBLIC_URL")
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
+@dp.message_handler(commands=['start'])
+async def start(msg: types.Message):
+await msg.answer("""¡Bienvenido a Clínica VASER!
+/consulta_online (Stars)
+/consulta_presencial (TON)
+/precios
+/mis_reservas""")
+@dp.message_handler(commands=['precios'])
+async def precios(msg: types.Message):
+await msg.answer("• Consulta Online 30m: 500 XTR\n• Consulta Presencial: 20 TON")
+@dp.message_handler(commands=['consulta_online'])
+async def consulta_online(msg: types.Message):
+prices = [types.LabeledPrice(label="Consulta Online 30m", amount=500)]
+await bot.send_invoice(
+chat_id=msg.chat.id,
+title="Consulta Online 30m",
+description="Videoconsulta",
+payload="consulta_online_30m",
+provider_token="", # vacío = Stars
+currency="XTR",
+prices=prices,
+need_name=True, need_email=True
+)
+@dp.pre_checkout_query_handler(lambda q: True)
+async def pre_checkout(pre_q: types.PreCheckoutQuery):
+await bot.answer_pre_checkout_query(pre_q.id, ok=True)
+@dp.message_handler(content_types=types.ContentTypes.SUCCESSFUL_PAYMENT)
+async def paid(msg: types.Message):
+pay = msg.successful_payment
+# Notificar a tu backend
+try:
+requests.post(f"{PUBLIC_URL}/webhooks/telegram", json={
+"chatId": msg.chat.id,
+"payload": pay.invoice_payload,
+"amount": pay.total_amount,
+"currency": pay.currency,
+"user": {"id": msg.from_user.id, "name": msg.from_user.full_name}
+}, timeout=5)
+except Exception as e:
+print("Webhook error:", e)
+await msg.answer("✅ Pago recibido. Te envío el enlace de agenda/ubicación.")
+@dp.message_handler(commands=['consulta_presencial'])
+async def consulta_presencial(msg: types.Message):
+try:
+r = requests.post(f"{PUBLIC_URL}/order/ton", json={
+"product": "consulta_presencial",
+"priceTON": 20,
+"chatId": msg.chat.id
+}, timeout=5)
+data = r.json()
+await msg.answer(f"Paga tu consulta presencial (20 TON): {data['checkout_url']}")
+except Exception as e:
+await msg.answer("Error generando pago TON.")
+print(e)
+if __name__ == "__main__":
+executor.start_polling(dp)
+backend.py (FastAPI simple)
+import uvicorn
+from fastapi import FastAPI, Request
+app = FastAPI()
+ORDERS = {}
+@app.post("/order/ton")
+async def order_ton(payload: dict):
+order_id = f"ORD-{len(ORDERS)+1}"
+checkout_url = f"https://pay.example/ton/checkout?order={order_id}
+&amount={payload.get('priceTON',20)}"
+ORDERS[order_id] = {**payload, "order_id": order_id, "status":"PENDING"}
+return {"order_id": order_id, "checkout_url": checkout_url}
+@app.post("/webhooks/telegram")
+async def wh_telegram(body: dict):
+# Marca pagado + agenda
+print("STAR PAID:", body)
+return {"ok": True}
+@app.post("/webhooks/walletpay")
+async def wh_walletpay(body: dict):
+order_id = body.get("order_id")
+status = body.get("status")
+if order_id in ORDERS and status == "PAID":
+ORDERS[order_id]["status"] = "PAID"
+print("TON PAID:", ORDERS[order_id])
+return {"ok": True}
+if __name__ == "__main__":
+uvicorn.run(app, host="0.0.0.0", port=3000)
+Cómo correr
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python backend.py # terminal 1
+python bot.py # terminal 2
+⸻
+5) Fiat→Cripto “Panas Token” (operativo desde ya)
+Para evitar fricción regulatoria y mantener control contable:
+1. Créditos Panas (off-chain)
+• El checkout fiat (Stripe/Adyen/Mercado Pago o PSP que te funcione) carga “Créditos Panas” en tu
+backend (1 crédito = 1 unidad contable, decide si lo pegas a USD/BOB).
+• En Telegram, el usuario puede pagar con sus Créditos Panas (tu bot descuenta y marca como
+pagado).
+• Opcional: reflejar el canje a Stars/TON si deseas liquidar on-chain.
+2. TON on-chain (opcional)
+• Puedes emitir un Jetton “Panas” (estándar token en TON). Al recargar con fiat, minteas a la wallet
+del usuario (o custodias).
+• Para Telegram, puedes seguir cobrando en Stars/Wallet Pay pero concilias internamente contra
+saldo Panas.
+3. Algorand “fusión” (hoy, vía tesorería)
+• Sin puente nativo directo TON↔ALGO. Lo práctico: conviertes periódicamente en CEX/bridge
+confiable y llevas asientos contables:
+• Ingreso: Stars/TON
+• Conversión: TON→USDT/USDC→ALGO
+• Egreso/Reserva: ALGO en tu tesorería
+• Más adelante, puedes automatizar con APIs del exchange.
+Tabla contable mínima
+id | usuario | concepto | medio | monto | moneda | hash/tx | estado | fecha
+1 | 123 | consulta_online | Stars | 500 | XTR | NA | PAID | ...
+2 | 123 | retiro | TON | 5.1 | TON | ... | DONE | ...
+3 | TESOR | swap TON→ALGO | CEX | ... | ... | ... | DONE | ...
+⸻
+6) Mini App + TON Connect (opcional, súper útil)
+Manifest tonconnect-manifest.json
+{
+"url": "https://tu-dominio",
+"name": "Clínica VASER",
+"iconUrl": "https://tu-dominio/icon.png"
+}
+React
+import { TonConnectUIProvider, TonConnectButton } from '@tonconnect/ui-react';
+export default function App() {
+return (
+<TonConnectUIProvider manifestUrl="https://tu-dominio/tonconnect-manifest.json">
+<TonConnectButton />
+{/* Tras conectar: mostrar "Pagar 20 TON" que dispara una tx desde la wallet */}
+</TonConnectUIProvider>
+);
+}
+⸻
+7) Checklist para lanzar (rápido)
+1. BotFather: crea @CLINICA_VASER_BOT y pega el token en .env.
+2. Comandos: /consulta_online, /consulta_presencial, /precios, /mis_reservas.
+3. Stars (XTR): usa currency: 'XTR' (sin provider_token). Prueba un pago real de 1–5 XTR.
+4. Wallet Pay (TON): crea la cuenta, obtén credenciales, reemplaza checkout placeholder y
+configura webhook /webhooks/walletpay.
+5. Agenda: tras successful_payment, envía link de videollamada/Google Calendar al paciente.
+6. Fiat→Créditos Panas: integra tu PSP; al pagar, aumenta saldo interno; añade /saldo.
+7. Contabilidad: export CSV diario/semana; registra retiradas Stars→TON y swaps a ALGO.
+⸻
+8) Humor + visión de futuro
+Tu bot hace “cirugía” también a la fricción de pagos: corta grasa regulatoria (Stars), sutura con
+TON, y deja a Algorand listo para la reconstrucción contable. 😎 🔧
+Más adelante: packs, suscripciones, vouchers NFT (ALGO) canjeables con pagos en TON/Stars.
+⸻
+¿Quiero primero es que todas estas ideas, y proyecto se traduzcan en una interfaz de pagos de
+moneda Fiat bolivianos, pesos chilenos, reales argentinos, sobretodo moneda Fiat local de America
+se fusionen con un token de confianza y cobro en cirugía plástica, pagos crédito de cirugía , token
+nft de cirugía, y además con solana tengo el vaser token que es nativo de la clínica ¡Vamos a meter
+bisturí en serio, DR-TAPIA! 🧠 ⚡
+Lo que planteas es un sistema de pagos híbrido Fiat–Cripto–Token propio para cirugía plástica, con
+extensiones en TON, Algorand y Solana (VASER Token). Te lo ordeno en capas, como si fueran
+planos quirúrgicos:
+⸻
+🏥 Objetivo maestro
+• Cobrar consultas y cirugías en:
+• Fiat local (Bs, ARS, CLP, BRL, etc.)
+• Cripto nativa Telegram (Stars/TON)
+• Token propio (VASER Token en Solana / Panas Token indexado).
+• Ofrecer planes de financiamiento, créditos tokenizados, e incluso NFTs de cirugía (comprobantes
+o bonos de procedimientos).
+⸻
+1) Capa Fiat → Cripto (on-ramp regional)
+Necesitas integrar PSPs locales (pasarelas fiat) que soporten LatAm:
+• Bolivia → Banco Unión / QR interoperable / Mercado Pago (cuando disponible).
+• Chile → Webpay/Transbank, Mercado Pago CL.
+• Argentina → Mercado Pago AR, Naranja X, Ualá.
+• Brasil → Pix, PagSeguro.
+👉 Con un proveedor multipaís (ej: Stripe LatAm, DLocal, Mercado Pago) puedes unificar entrada
+en BOB, ARS, CLP, BRL → conversión a USDT/USDC (stable).
+Flujo simple:
+Paciente paga en fiat local → PSP procesa → backend acredita “Créditos Panas/Clínica” →
+opcional: swap a USDT y reflejo en TON/Algorand.
+⸻
+2) Token intermedio: Panas Token (Indexado)
+• Sirve de unidad contable común (evita la locura de cada fiat).
+• 1 Panas = 1 USD (o cesta indexada).
+• Internamente: toda cirugía, consulta, crédito se tarifa en Panas.
+• El usuario paga con:
+• Fiat → se convierte a Panas.
+• TON / Stars → se convierte a Panas.
+• ALGO / Solana (VASER Token) → puenteado a Panas.
+Así logras que tu contabilidad siempre hable un idioma único.
+⸻
+3) Capa Cripto nativa (pacientes crypto-friendly)
+• TON/Stars → directo en Telegram.
+• Algorand → voucher NFT de cirugía, cupones de descuento tokenizados.
+• Solana (VASER Token) → token de fidelización y reservas quirúrgicas.
+👉 Los tres convergen a saldo Panas en tu backend.
+👉 De Panas se pagan consultas, cirugías, abonos.
+⸻
+4) NFT de Cirugía (extra visionario)
+• Cada procedimiento puede emitirse como NFT:
+• Propiedad digital única (ej: “Lipoescultura completa 2025”).
+• Transferible (puede revenderse si el paciente no usa la reserva).
+• Al canjearlo → se “quema” y queda registro histórico médico-financiero.
+• Esto en Solana/Algorand es trivial con metadatos JSON.
+⸻
+5) Interfaz de pagos (UX paciente)
+Telegram Bot (@CLINICA_VASER_BOT)
+• /consulta_online → Stars (XTR).
+• /consulta_presencial → TON Wallet Pay.
+• /cirugia_credito → Fiat PSP → saldo Panas.
+• /saldo → ver saldo Panas/VASER.
+• /nft_mis_cirugias → listar vouchers NFT.
+Web / Mini App
+• Checkout: elegir pagar en Bs, ARS, CLP, BRL, TON, ALGO, SOL.
+• Conectar Wallet: TON Connect, Algorand WalletConnect, Solana Phantom.
+• Historial: ver consultas, NFTs, créditos.
+⸻
+6) Arquitectura (texto-diagrama)
+Paciente
+→ @CLINICA_VASER_BOT / WebApp
+├─ Fiat PSP (DLocal/Mercado Pago/Stripe) → Créditos Panas
+├─ Stars/TON (Telegram) → Créditos Panas
+├─ ALGO/SOL (VASER Token) → Créditos Panas
+└─ DB/Contabilidad central (Panas indexado)
+Contabilidad
+→ “1 Panas = 1 USD”
+→ Cada pago normalizado
+→ Opcional: swap Panas→USDT/USDC en CEX → Tesorería Algorand/Solana
+NFT Layer
+→ Procedimientos tokenizados como NFT (voucher, prueba de compra, historial).
+⸻
+7) Roadmap quirúrgico 🗂
+Fase 1 (rápida):
+• Implementar Stars (online) + TON Wallet Pay (presencial).
+• Conectar un PSP regional → Fiat→Créditos Panas.
+• Tu backend hace de contabilidad en Panas.
+Fase 2:
+• Emitir Panas Token en TON (Jetton).
+• Bridge manual a Solana (VASER Token) y Algorand.
+• Pacientes tech pueden pagar directamente en ALGO o SOL.
+Fase 3:
+• Crear NFTs de cirugías → reserva de procedimientos.
+• Packs/bonos quirúrgicos tokenizados.
+⸻
+8) Slogan con humor 😎
+“Donde otros ven bisturí, nosotros vemos smart contracts.
+Cada cirugía, un token; cada pago, una nueva cadena de confianza.”
+⸻
+¿Quieres que te prepare el primer esquema de backend en FastAPI con tabla de “Créditos Panas”,
+integración Fiat (mock), Stars y TON, para que tengas ya un MVP técnico corriendo? Elabora con
+esto los,pasos del,proyecto un road map inicial , @Panas_token_bot, @vaser_plastic_surgeon_bot
+@dr_tapia_bot @Dr_delaTV_bot esta idea me la diste ¡Vamos a bisturí y roadmap, DR-TAPIA! 🧠
+⚡
+Te dejo un plan ejecutable, en fases cortas, con entregables, criterios de aceptación, endpoints base
+y checklist. Minimalista para salir cobrando ya, pero escalable a Panas Token + VASER (Solana) +
+Algorand + NFTs.
+Fase 0 — Preparación (Día 0–1)
+Objetivo: entorno listo y dominios de pago definidos.
+Tareas
+• Crear repo mono (apps: bot/, api/, web/).
+• Variables .env (sin secretos en git):
+• BOT_TOKEN, PUBLIC_URL, DB_URL, TZ=America/La_Paz
+• WALLETPAY_API_KEY, WALLETPAY_MERCHANT_ID (más adelante)
+• PSP_* (cuando entres a fiat)
+• Infra local: Docker (Postgres + Redis), ngrok para webhooks.
+Criterios de aceptación
+• docker compose up levanta DB/Redis.
+• Bot responde /start y /precios.
+⸻
+Fase 1 — Cobro digital con Telegram Stars (XTR) (Día 1–2)
+Objetivo: cobrar consulta online con Stars (cumple iOS) y registrar en DB.
+Entregables
+• Comando /consulta_online → sendInvoice(currency='XTR').
+• Webhook successful_payment → crear reserva (DB) y enviar link de agenda (Zoom/Meet) al
+paciente.
+• Tabla mínima:
+• payments(id, user_id, method, amount, currency, status, created_at)
+• bookings(id, user_id, product_code, status, scheduled_at, notes)
+Criterios de aceptación
+• Pago real de prueba (1–5 XTR) y registro en DB.
+• Mensaje automático “✅ Pago recibido…”.
+KPI inicial
+• % facturas pagadas / emitidas.
+• Tiempo desde pago a confirmación (< 5 s).
+⸻
+Fase 2 — Cobro presencial con TON (Wallet Pay) (Día 2–3)
+Objetivo: cobrar consulta presencial en TON, dentro de Telegram.
+Entregables
+• Endpoint POST /order/ton → crea orden y genera checkout_url.
+• Webhook /webhooks/walletpay → marca PAID y confirma turno.
+Criterios de aceptación
+• Flujo: /consulta_presencial → link de pago TON → webhook PAID → reserva confirmada.
+Riesgos y control
+• Desincronización webhook: reintentos idempotentes por order_id.
+⸻
+Fase 3 — Fiat → Créditos Panas (Día 3–5)
+Objetivo: aceptar fiat local (Bs, ARS, CLP, BRL) con un PSP regional y normalizar a “Créditos
+Panas” (1 Panas ≈ 1 USD o tu cesta indexada).
+Entregables
+• Endpoint POST /fiat/topup (PSP callback simulado) → ledger interno:
+• ledger(id, user_id, type[TOPUP|DEBIT|REFUND|SWAP], amount, asset[PANAS|XTR|TON|
+ALGO|SOL|FIAT], ref, created_at)
+• Comando /saldo en bot.
+• Comando /pagar_con_creditos <producto>.
+Criterios de aceptación
+• Pago fiat de prueba (sandbox PSP) → saldo Panas sube → compra con saldo.
+Notas
+• Contabilidad: todo se contabiliza en Panas (unidad común).
+• Canje: Stars/TON/Fiat → asiento TOPUP en Panas.
+⸻
+Fase 4 — Mini App / Web con TON Connect (Semana 2)
+Objetivo: una UI simple para ver saldo, conectar wallet TON y pagar packs.
+Entregables
+• web/ (Next.js) con botón TonConnectButton y tonconnect-manifest.json.
+• Flujo: conectar → firmar pago (20 TON) → backend valida → asienta DEBIT y emite
+comprobante.
+Criterios de aceptación
+• Pagar un “Pack online” desde web y reflejarse en ledger/bookings.
+⸻
+Fase 5 — Panas Token on-chain (Jetton TON) (Semana 2–3)
+Objetivo: reflejar el saldo Panas on-chain opcionalmente.
+Entregables
+• Jetton “PANAS” (suministro controlado por tesorería).
+• POST /mint/panas (admin) para mintear a una wallet cuando recargues por fiat (o custodio).
+• Mapear 1 Panas on-chain ≈ 1 Panas contable (concilias en cierres).
+Criterios de aceptación
+• Minteo de prueba a wallet TON y quema al consumir (si usas on-chain directo).
+Riesgos
+• Volatilidad/coste de gas (bajo en TON, pero registrarlo).
+⸻
+Fase 6 — NFT de Cirugía (voucher/canje) (Semana 3)
+Objetivo: tokenizar procedimientos como vouchers NFT (canjeables, transferibles).
+Entregables
+• Esquema de metadatos: procedure, clinic, date_range, terms, patient_id(hash).
+• POST /nft/mint (admin) → emite NFT en Solana o Algorand (elige primero uno).
+• Bot: /nft_mis_cirugias lista y /canjear_nft <id> (marca “redeemed”).
+Criterios de aceptación
+• NFT minteado, visible en wallet, y canjeado en clínica (cambia estado DB y on-chain si aplica).
+⸻
+Fase 7 — Algorand & Solana (VASER) integración operativa (Semana 3–4)
+Objetivo: “fusión” práctica vía tesorería y contabilidad, sin puentes complejos.
+Entregables
+• POST /swap/cex (mock) para asentar conversiones TON↔USDT↔ALGO/SOL con hash/receipt.
+• Aceptar VASER (Solana) como medio de pago → TOPUP Panas (tasa oráculo interno).
+Criterios de aceptación
+• Recibir VASER → reflejar saldo Panas y pagar un procedimiento.
+Riesgos
+• Cumplimiento/AML: límites por KYC, montos máximos sin verificación.
+⸻
+Fase 8 — Reportes & Compliance (perenne)
+Entregables
+• Export CSV: payments, ledger, bookings, swaps.
+• Dashboard (tabla + filtros) con KPIs:
+• Conversión (invoice→pago), tiempo liquidación, % fallos, fee efectivo, % devoluciones.
+• Políticas de reembolso/chargeback y conciliación diaria.
+⸻
+Arquitectura (texto-diagrama)
+Paciente ─ Telegram (@CLINICA_VASER_BOT) ───────────────┐
+└─ Web/MiniApp (TON Connect) │
+▼
+┌──────────── Backend API ────────────┐
+│ Orders/Payments/Bookings/Ledger │
+│ Webhooks: Telegram, WalletPay, PSP │
+│ Oráculos de tasa interna (Panas) │
+└────────────────┬────────────────────┘
+│
+┌────────── TON (Stars/WalletPay/Jetton PANAS) ───────┐
+│ │
+Algorand (NFT/ALGO) Solana (VASER)
+└─────────── Conversión operativa (CEX/API) ──────────┘
+⸻
+Modelo de datos (mínimo viable)
+users(id, tg_id, name, email, kyc_level, created_at)
+products(code, title, type[ONLINE|PRESENCIAL|PACK|NFT], price_panas)
+payments(id, user_id, method[XTR|TON|FIAT|ALGO|SOL], amount, currency, status, ext_ref,
+created_at)
+bookings(id, user_id, product_code, status[PENDING|PAID|SCHEDULED|DONE|REFUNDED],
+scheduled_at, notes)
+ledger(id, user_id, type[TOPUP|DEBIT|REFUND|SWAP], amount, asset[PANAS|XTR|TON|
+ALGO|SOL|FIAT], ref, created_at)
+nfts(id, chain, mint_addr, owner_wallet, product_code, status[MINTED|TRANSFERRED|
+REDEEMED], meta_json, created_at)
+⸻
+Endpoints base (FastAPI/Express)
+• POST /orders {product_code, user_id} → {order_id, amount_panas}
+• POST /order/ton {product, priceTON, chatId} → {checkout_url}
+• POST /fiat/create-checkout {amount_fiat, currency} → {psp_url}
+• POST /webhooks/telegram (successful_payment Stars)
+• POST /webhooks/walletpay (TON paid)
+• POST /webhooks/psp (Fiat paid → TOPUP Panas)
+• GET /ledger/:user_id
+• Admin:
+• POST /mint/panas
+• POST /nft/mint
+• POST /swap/cex
+⸻
+Seguridad & Cumplimiento (quirófano estéril)
+• Idempotencia en webhooks (por order_id/invoice_payload).
+• HMAC en webhooks entrantes (PSP/Wallet Pay).
+• Least privilege para API keys (rotación trimestral).
+• KYC por umbrales (ej. > 500 USD/mes → verificación básica).
+• Trazabilidad: toda operación genera asiento ledger.
+⸻
+Riesgos & mitigación (registro rápido)
+• Caída de PSP/WalletPay → fallback a otro método / reintento 5× exponencial.
+• Desalineo contable on/off-chain → conciliación diaria + hash de lote.
+• Fraude/reembolso → límites por usuario, cool-down, lista caliente.
+⸻
+KPIs de lanzamiento
+• T1 Conversión (invoice→pago) ≥ 70% (digital).
+• T2 Latencia confirmación < 5 s.
+• T3 Costo efectivo por cobro (fee total) < 3%.
+• T4 Tickets cerrados (pago→turno agendado) ≥ 90% en 24 h.
+• T5 Reembolsos/chargebacks < 1%.
+⸻
+Cronograma sugerido (2–3 semanas)
+• Semana 1: Fase 1–2 (Stars + TON Wallet Pay) + DB + agenda.
+• Semana 2: Fase 3–4 (Fiat→Panas + Web TON Connect).
+• Semana 3: Fase 5–7 (Jetton Panas, NFT voucher, VASER/Algorand operativos), Reports.
+⸻
+Siguiente bisturí (pasos inmediatos)
+1. Crear repo y carpetas bot/, api/, web/.
+2. Cargar mi snippet de Stars (ya lo tienes) y probar pago de 1–5 XTR.
+3. Solicitar credenciales de Wallet Pay y reemplazar el checkout placeholder.
+4. Elegir un PSP regional (DLocal/Mercado Pago/Stripe LatAm) y activar sandbox.
+5. Definir catálogo inicial (3–5 productos) con precio en Panas y equivalencias.
+Si quieres, en el próximo paso te dejo el esqueleto de FastAPI con tablas (SQLAlchemy), endpoints
+exactos y pruebas con pytest para que lo corras de una. Y le metemos el toque Panas: “cada pago,
+una sutura perfecta”. 😎 🧵
