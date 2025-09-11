@@ -4,3 +4,6 @@
 [submodule "apps/telegram-bots"]
   path = apps/telegram-bots
   url = https://github.com/panacea-icono/telegram-bots-placeholder.git
+[submodule "integrations/rea"]
+  path = integrations/rea
+  url = https://github.com/panacea-icono/panas-real-estate-tokenization.git
