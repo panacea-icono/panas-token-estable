@@ -71,7 +71,7 @@ export class PanasToken {
     const { name, symbol, decimals } = this.cfg;
     const supply = this.totalSupply;
     const formattedSupply = PanasToken.formatUnits(supply, decimals ?? 0);
-    return { name, symbol, decimals, totalSupply: supply, formattedSupply };
+    return { name, symbol, decimals, supply, formattedSupply };
   }
 
   getNetworkConfig(): NetworkConfig {

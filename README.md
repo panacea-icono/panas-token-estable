@@ -62,6 +62,28 @@ cd services/api && uvicorn main:app --reload
 - Health: `GET /health`
 - Price: `GET /index/price`
 
+## 🏦 Índice Fiat y Cálculo del Valor de PANAS Estable
+
+Este proyecto incluye un sistema para calcular el índice fiat diario basado en tres fuentes de datos:
+
+1. FX Oficial (tipo de cambio oficial)
+2. FX Paralelo (mercado informal)
+3. USDT (precio de stablecoin en mercados cripto)
+
+Pesos predeterminados: 20% oficial, 40% paralelo, 40% USDT.
+
+- Endpoint: `POST /oracles/fx/update`
+- Body JSON: `{ "fx_official": 6.96, "fx_parallel": 12.3, "fx_usdt": 12.5 }`
+- Persistencia: archivo JSON diario en `services/api/data/fiat_index.json`
+
+Ejemplo rápido con curl:
+
+```bash
+curl -X POST http://localhost:8000/oracles/fx/update \
+  -H "Content-Type: application/json" \
+  -d '{"fx_official":6.96, "fx_parallel":12.3, "fx_usdt":12.5}'
+```
+
 ## 📊 Tokenomics
 
 Ver `config/tokens.yaml` para pesos y configuración del índice.

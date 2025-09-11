@@ -1,0 +1,41 @@
+name: Update Fiat Index Daily
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  update_fiat_index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install FastAPI deps
+        working-directory: services/api
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn[standard] pydantic
+
+      - name: Start API
+        working-directory: services/api
+        run: |
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
+          sleep 2
+
+      - name: Update Fiat Index
+        run: |
+          curl -sS -X POST http://localhost:8000/oracles/fx/update \
+            -H 'Content-Type: application/json' \
+            -d '{"fx_official":6.96, "fx_parallel":12.3, "fx_usdt":12.5}' | tee /tmp/fiat_index_resp.json
+
+      - name: Show response
+        run: cat /tmp/fiat_index_resp.json
+
+
