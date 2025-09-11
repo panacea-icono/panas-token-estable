@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  python-and-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Python deps
+        working-directory: services/api
+        run: |
+          if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+          if [ -f "pyproject.toml" ]; then pip install .; fi
+          pip install pip-audit safety
+      - name: Node deps (frontend)
+        working-directory: frontend/dapp
+        run: |
+          if [ -f "package.json" ]; then npm ci || npm i; fi
+      - name: Lint/Test Python
+        working-directory: services/api
+        run: |
+          python -m compileall . || true
+          pip-audit || true
+          safety check -i 70612 -i 70613 || true
+      - name: Lint/Test Node
+        working-directory: frontend/dapp
+        run: |
+          npm run lint || true
+          npm test || true

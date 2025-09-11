@@ -1,0 +1,36 @@
+panas_index:
+  symbol: PANAS
+  chain: TON
+  type: jetton
+  jetton_metadata:
+    name: "PANAS Stable Index"
+    description: "Índice estable multi-activo respaldado por VASER (Solana), KUCHI (BSC), NF Domains (Algorand) y colaterales."
+    image: "ipfs://PLACEHOLDER"
+    decimals: 9
+underlyings:
+  - name: VASER
+    chain: SOLANA
+    type: SPL
+    address: "So1anaAddressPLACEHOLDER"
+    weight: 0.40
+  - name: KUCHI
+    chain: BSC
+    type: BEP20
+    address: "BSCAddressPLACEHOLDER"
+    weight: 0.25
+  - name: NF_DOMAINS_COLLATERAL
+    chain: ALGORAND
+    type: NFD
+    address: "NFDCollectionPLACEHOLDER"
+    weight: 0.20
+  - name: KUCHICOIN_NFT_SERIES
+    chain: SOLANA
+    type: NFT_COLLECTION
+    address: "SolanaNFTSeriesPLACEHOLDER"
+    weight: 0.15
+rebalancing:
+  policy: "rules-based"
+  interval_days: 30
+  drift_threshold: 0.05
+oracles:
+  price_feeds: ["internal_agg","coingecko","custom_feeds"]

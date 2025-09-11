@@ -1,0 +1,52 @@
+{
+  "name": "Testing Environment",
+  "environment": "testing",
+  "debug": true,
+  "logging": {
+    "level": "error",
+    "console": false,
+    "file": false,
+    "filePath": "./logs/testing.log"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "panas_token_test",
+    "user": "panas_user",
+    "password": "panas_password",
+    "ssl": false
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "password": "",
+    "db": 1
+  },
+  "api": {
+    "port": 3001,
+    "cors": {
+      "origin": ["http://localhost:3001"],
+      "credentials": true
+    },
+    "rateLimit": {
+      "windowMs": 900000,
+      "max": 1000
+    }
+  },
+  "algorand": {
+    "network": "testnet",
+    "timeout": 5000,
+    "retries": 1
+  },
+  "monitoring": {
+    "enabled": false,
+    "metrics": {
+      "enabled": false,
+      "port": 9091
+    },
+    "healthCheck": {
+      "enabled": false,
+      "interval": 30000
+    }
+  }
+}

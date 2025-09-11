@@ -1,0 +1,19 @@
+{
+  "MD041": false,
+  "MD024": false,
+  "files": {
+    "LICENSE": {
+      "MD041": false
+    },
+    "CHANGELOG.md": {
+      "MD024": false
+    }
+  },
+  "ignore": [
+    "LICENSE",
+    "*.md",
+    "!README.md",
+    "!ROADMAP.md",
+    "!CHANGELOG.md"
+  ]
+}

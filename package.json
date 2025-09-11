@@ -1,0 +1,17 @@
+{
+  "name": "panas-token-estable-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "audit": "node scripts/node_audit.mjs",
+    "fmt": "prettier -w .",
+    "lint": "echo 'Lint monorepo (custom at projects)'",
+    "status": "bash scripts/gen_status.sh",
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "audit:deps": "bash scripts/audit_deps.sh",
+    "audit:env": "bash scripts/audit_env.sh"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

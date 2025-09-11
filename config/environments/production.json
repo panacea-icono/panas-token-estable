@@ -1,0 +1,57 @@
+{
+  "name": "Production Environment",
+  "environment": "production",
+  "debug": false,
+  "logging": {
+    "level": "info",
+    "console": false,
+    "file": true,
+    "filePath": "./logs/production.log"
+  },
+  "database": {
+    "host": "${DB_HOST}",
+    "port": "${DB_PORT}",
+    "name": "${DB_NAME}",
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}",
+    "ssl": true
+  },
+  "redis": {
+    "host": "${REDIS_HOST}",
+    "port": "${REDIS_PORT}",
+    "password": "${REDIS_PASSWORD}",
+    "db": 0
+  },
+  "api": {
+    "port": "${PORT}",
+    "cors": {
+      "origin": ["https://panacea-icono.com", "https://panas.panacea-icono.com"],
+      "credentials": true
+    },
+    "rateLimit": {
+      "windowMs": 900000,
+      "max": 1000
+    }
+  },
+  "algorand": {
+    "network": "mainnet",
+    "timeout": 30000,
+    "retries": 5
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics": {
+      "enabled": true,
+      "port": 9090
+    },
+    "healthCheck": {
+      "enabled": true,
+      "interval": 60000
+    }
+  },
+  "security": {
+    "jwtSecret": "${JWT_SECRET}",
+    "encryptionKey": "${ENCRYPTION_KEY}",
+    "apiKey": "${API_KEY}"
+  }
+}

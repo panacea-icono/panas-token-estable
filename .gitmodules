@@ -1,0 +1,6 @@
+[submodule "contracts/ton"]
+  path = contracts/ton
+  url = https://github.com/panacea-icono/ton-contracts-placeholder.git
+[submodule "apps/telegram-bots"]
+  path = apps/telegram-bots
+  url = https://github.com/panacea-icono/telegram-bots-placeholder.git

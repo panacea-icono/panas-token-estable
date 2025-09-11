@@ -1,0 +1,24 @@
+{
+  "name": "Algorand Mainnet",
+  "network": "mainnet",
+  "algod": {
+    "url": "https://mainnet-api.algonode.cloud",
+    "token": "",
+    "port": 443
+  },
+  "indexer": {
+    "url": "https://mainnet-idx.algonode.cloud",
+    "token": "",
+    "port": 443
+  },
+  "explorer": {
+    "url": "https://algoexplorer.io",
+    "api": "https://algoexplorer.io/api"
+  },
+  "params": {
+    "genesisHash": "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qZkitLY=",
+    "genesisId": "mainnet-v1.0",
+    "minFee": 1000,
+    "minBalance": 100000
+  }
+}

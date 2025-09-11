@@ -1,0 +1,17 @@
+version: 1
+project_name: panas-token-estable
+targets:
+  - path: .
+    languages: [python, javascript, typescript, dockerfile, yaml, markdown]
+rules:
+  normalize_line_endings: true
+  respect_gitattributes: true
+  ignore_file: ".gitignore"
+lfs:
+  enforce_patterns: ["*.png","*.jpg","*.jpeg","*.gif","*.webp","*.mp4","*.mov","*.pdf","*.onnx","*.bin","*.pt","*.safetensors"]
+reports:
+  output_dir: .codesight/reports
+  formats: [summary, sarif]
+auto:
+  run_on_commit: true
+  run_on_branch: [ "main" ]

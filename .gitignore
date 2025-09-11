@@ -1,0 +1,50 @@
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env/
+.env.*.local
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+dist/
+build/
+
+# Node / Web
+node_modules/
+.next/
+.out/
+.cache/
+.pnpm-store/
+coverage/
+*.local
+
+# Docker
+docker-data/
+.docker/
+*.tar
+*.img
+
+# Hugging Face / Datasets / Models
+datasets/
+models/
+artifacts/
+
+# Secrets (no subir credenciales)
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+*.keystore
+*.jks
+.env.local
+.env.production

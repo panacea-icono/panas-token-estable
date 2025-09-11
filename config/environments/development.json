@@ -1,0 +1,52 @@
+{
+  "name": "Development Environment",
+  "environment": "development",
+  "debug": true,
+  "logging": {
+    "level": "debug",
+    "console": true,
+    "file": true,
+    "filePath": "./logs/development.log"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "panas_token_dev",
+    "user": "panas_user",
+    "password": "panas_password",
+    "ssl": false
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "password": "",
+    "db": 0
+  },
+  "api": {
+    "port": 3000,
+    "cors": {
+      "origin": ["http://localhost:3000", "http://localhost:3001"],
+      "credentials": true
+    },
+    "rateLimit": {
+      "windowMs": 900000,
+      "max": 100
+    }
+  },
+  "algorand": {
+    "network": "testnet",
+    "timeout": 10000,
+    "retries": 3
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics": {
+      "enabled": true,
+      "port": 9090
+    },
+    "healthCheck": {
+      "enabled": true,
+      "interval": 30000
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Algorand Testnet",
+  "network": "testnet",
+  "algod": {
+    "url": "https://testnet-api.algonode.cloud",
+    "token": "",
+    "port": 443
+  },
+  "indexer": {
+    "url": "https://testnet-idx.algonode.cloud",
+    "token": "",
+    "port": 443
+  },
+  "explorer": {
+    "url": "https://testnet.algoexplorer.io",
+    "api": "https://testnet.algoexplorer.io/api"
+  },
+  "faucet": {
+    "url": "https://testnet.algoexplorer.io/dispenser"
+  },
+  "params": {
+    "genesisHash": "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=",
+    "genesisId": "testnet-v1.0",
+    "minFee": 1000,
+    "minBalance": 100000
+  }
+}
