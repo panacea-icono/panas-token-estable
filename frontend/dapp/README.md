@@ -1,6 +1,7 @@
 # DApp Frontend - PANAS Token
 
 ## TODO
+
 - [ ] Next.js setup completo
 - [ ] TON Connect integration
 - [ ] Wallet Pay integration

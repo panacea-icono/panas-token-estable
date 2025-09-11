@@ -2,7 +2,7 @@
 // Configuración centralizada de logging con Winston
 
 import winston from 'winston';
-import path from 'path';
+// import path from 'path';
 import fs from 'fs';
 
 // Crear directorios de logs si no existen
@@ -45,7 +45,7 @@ const logFormat = winston.format.combine(
 const transports: winston.transport[] = [
   // Console transport para desarrollo
   new winston.transports.Console({
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    level: process.env['NODE_ENV'] === 'production' ? 'info' : 'debug',
     format: winston.format.combine(
       winston.format.colorize(),
       winston.format.simple()
@@ -54,7 +54,7 @@ const transports: winston.transport[] = [
 ];
 
 // Agregar file transports en producción
-if (process.env.NODE_ENV === 'production') {
+if (process.env['NODE_ENV'] === 'production') {
   // Log general de aplicación
   transports.push(
     new winston.transports.File({
@@ -91,11 +91,37 @@ if (process.env.NODE_ENV === 'production') {
 
 // Logger principal
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env['LOG_LEVEL'] || 'info',
   format: logFormat,
   transports,
   exitOnError: false
 });
+
+// Factory para tests
+export function createLogger(name: string, cfg?: { level?: string; filename?: string }) {
+  const level = cfg?.level && ['error','warn','info','http','verbose','debug','silly'].includes(cfg.level)
+    ? cfg.level
+    : 'info';
+  const t: winston.transport[] = [
+    new winston.transports.Console({ level, format: winston.format.simple() })
+  ];
+  if (cfg?.filename) {
+    try {
+      if (!fs.existsSync('logs')) fs.mkdirSync('logs');
+      t.push(new winston.transports.File({ filename: cfg.filename, level }));
+    } catch (_e) {
+      // Ignorar errores de filesystem en tests
+    }
+  }
+  const l = winston.createLogger({ level, transports: t });
+  // Compat setImmediate en entornos de test
+  // @ts-ignore
+  if (typeof setImmediate === 'undefined') {
+    // @ts-ignore
+    global.setImmediate = (fn: any, ...args: any[]) => setTimeout(fn, 0, ...args);
+  }
+  return l;
+}
 
 // Loggers especializados
 export const blockchainLogger = winston.createLogger({
@@ -289,7 +315,7 @@ export const cleanupOldLogs = () => {
 };
 
 // Configurar limpieza automática cada hora
-if (process.env.NODE_ENV === 'production') {
+if (process.env['NODE_ENV'] === 'production') {
   setInterval(cleanupOldLogs, 60 * 60 * 1000); // 1 hora
 }
 

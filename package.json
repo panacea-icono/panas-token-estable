@@ -9,9 +9,24 @@
     "status": "bash scripts/gen_status.sh",
     "bootstrap": "bash scripts/bootstrap.sh",
     "audit:deps": "bash scripts/audit_deps.sh",
-    "audit:env": "bash scripts/audit_env.sh"
+    "audit:env": "bash scripts/audit_env.sh",
+    "test": "jest --config ./tests/jest.config.js",
+    "test:ci": "jest --config ./tests/jest.config.js --coverage --ci --runInBand"
+  },
+  "dependencies": {
+    "algosdk": "^3.4.0",
+    "@solana/web3.js": "^1.95.3",
+    "ethers": "^6.13.2",
+    "tonweb": "^0.0.66"
   },
   "devDependencies": {
-    "prettier": "^3.3.3"
+    "@types/jest": "^30.0.0",
+    "@types/winston": "^2.4.4",
+    "jest": "^30.1.3",
+    "jest-environment-jsdom": "^30.1.2",
+    "prettier": "^3.3.3",
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.9.2",
+    "winston": "^3.17.0"
   }
 }

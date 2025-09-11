@@ -1,6 +1,8 @@
 module.exports = {
-  // Entorno de testing
-  testEnvironment: 'node',
+  // Raíz del repo (el archivo está en tests/)
+  rootDir: '..',
+  // Entorno de testing (jsdom para mocks de window)
+  testEnvironment: 'jsdom',
   
   // Directorios de tests
   testMatch: [
@@ -44,16 +46,24 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   
   // Transform files
+  preset: 'ts-jest/presets/default-esm',
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest'
+    '^.+\\.(ts|tsx)$': ['ts-jest', { useESM: true }]
+  },
+  extensionsToTreatAsEsm: ['.ts'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+      tsconfig: '<rootDir>/tsconfig.json'
+    }
   },
   
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   
   // Module name mapping
-  moduleNameMapping: {
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/utils/(.*)$': '<rootDir>/src/utils/$1',
@@ -73,9 +83,6 @@ module.exports = {
   
   // Restore mocks after each test
   restoreMocks: true,
-  
-  // Test results processor
-  testResultsProcessor: 'jest-sonar-reporter',
   
   // Global setup
   globalSetup: '<rootDir>/tests/global-setup.js',

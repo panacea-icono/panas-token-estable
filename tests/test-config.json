@@ -1,0 +1,6 @@
+{
+  "network": "testnet",
+  "timeout": 10000,
+  "retries": 3,
+  "parallel": true
+}

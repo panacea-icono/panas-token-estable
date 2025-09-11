@@ -37,12 +37,12 @@
       "@/api/*": ["src/api/*"],
       "@/utils/*": ["src/utils/*"],
       "@/types/*": ["src/types/*"]
-    }
+    },
+    "types": ["node", "jest"]
   },
   "include": [
     "src/**/*",
-    "tests/**/*",
-    "scripts/**/*"
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",

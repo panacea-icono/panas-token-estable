@@ -2,13 +2,15 @@
 
 ## 📋 Descripción General
 
-Esta guía proporciona instrucciones detalladas para desplegar el PanasToken Estable en diferentes entornos, desde desarrollo hasta producción.
+Esta guía proporciona instrucciones detalladas para desplegar el
+PanasToken Estable en diferentes entornos, desde desarrollo hasta
+producción.
 
 ## 🏗️ Arquitectura de Despliegue
 
 ### Componentes Principales
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend API   │    │   Blockchain    │
 │   (React)       │◄──►│   (Node.js)     │◄──►│   (Algorand)    │
@@ -726,18 +728,21 @@ curl http://localhost:8080/metrics
 ### Problemas Comunes
 
 1. **Error de conexión a base de datos**
+
    ```bash
    # Verificar conexión
    psql -h localhost -U panas -d panas_production
    ```
 
 2. **Error de memoria insuficiente**
+
    ```bash
    # Aumentar memoria
    export NODE_OPTIONS="--max-old-space-size=4096"
    ```
 
 3. **Error de permisos**
+
    ```bash
    # Verificar permisos
    ls -la logs/

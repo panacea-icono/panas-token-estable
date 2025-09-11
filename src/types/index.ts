@@ -22,3 +22,19 @@ export interface NetworkConfig {
   chainId: string;
   explorerUrl: string;
 }
+
+// Configuración del token PANAS utilizada en contratos y tests
+export interface TokenConfig {
+  name: string;
+  symbol: string;
+  decimals: number;
+  totalSupply: number;
+  // Campos de control/roles (usados por scripts de despliegue)
+  manager?: string;
+  reserve?: string;
+  freeze?: string;
+  clawback?: string;
+  // Metadatos opcionales
+  description?: string;
+  url?: string;
+}
