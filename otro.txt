@@ -1,0 +1,168 @@
+Genera un informe de los,tokens. Gs, kuchi o kuchicoin, vaser token con los datos vitals mejora este
+informed ¡Lista la ficha técnica, Tonka! Aquí tienes un informe comparativo con los datos vitales de
+GS, Kuchicoin (Kuchi) y VASER TOKEN a partir de lo que compartiste (capturas/JSON y
+contrato).
+GS — SMART GLOBAL TOKEN (Solana)
+• Mint: A1keUDicm5qfjjpjwhabK5EqVtBkkcdWGVjDXMqvbZ3w
+• Nombre / Símbolo: SMART GLOBAL TOKEN — GS
+• Chain / Programa: Solana — Token 2022 Program (con extensiones)
+• Metadata URI: https://gateway.irys.xyz/j9gTD1XOP8j3OXpJ_uMSvrQ3totPZ0J6ue6iceaRDxC
+• Update Authority / Creator: QLuFdPtfDrv3bAZfFZmb24aDQkKQfXUt2pPoD
+• Holders: ~67 (según captura)
+• Mercados / Pools: Dexlab (GS-Kuchicoin, GS-SOL, GS-USDC, PUGCOIN-GS)
+• Decimales / Supply: no visibles en captura (leer vía RPC antes de operar)
+• Notas de integración:
+• Usar @solana/spl-token con soporte Token-2022.
+• Añadir lectura de supply/decimals vía getParsedAccountInfo(mint).
+⸻
+Kuchicoin — KUCHI (BSC / BEP-20)
+• Contrato: 0x21b227d8085b4522805b6ad6c83...82068baa91 (pegar checksum completo de
+BscScan)
+• Nombre / Símbolo / Decimales: Kuchicoin — KUCHI — 18
+• Supply máximo: 21,000,000 KUCHI (constructor)
+• Router / DEX: Interfaz UniswapV2 → en BSC normalmente PancakeSwap V2
+• Mecánicas:
+• Reflection (redistribución) — _taxFee
+• Liquidez automática — _liquidityFee + swapAndLiquify
+• Dev Fee — _devFee → _devWalletAddress
+• Controles del owner:
+• Pausa global (Pause)
+• Blacklist (_isEnemy(address))
+• Cambios de fees y router
+• Riesgos operativos:
+• onlyOwner basado en tx.origin (mala práctica)
+• Posibilidad de pausar o bloquear wallets
+• Notas de integración:
+• Leer en dashboard: Pause, fees actuales, dev wallet, maxTx, blacklist para la wallet del usuario.
+⸻
+VASER TOKEN (Solana)
+• Mint: FrsW6JC2Em2iEjNyKtEmFpw5jRdjcuZ1Gbx4kAK4xX1S
+• Nombre / Símbolo: VASER TOKEN — VASER
+• Chain / Programa: Solana — Token Program (SPL estándar)
+• Metadata on-chain (Metaplex):
+• updateAuthority: FMH8E4GKJKubqjevEER4ZqDpkWtFyRUw1rVGj2TpYhH5
+• URI: https://file.dexlab.space/file/5e74bc92b2fa42798dff293639caf61a
+• sellerFeeBasisPoints: 0
+• isMutable: true
+• First Mint (fecha de creación): 2025-03-16 23:58:55 UTC (captura Solscan)
+• Holders: ~78 (99.99% del supply distribuido) — alta concentración
+• Mercados / Pools: Raydium (LIPO-VASER) y Meteora (VASER-USDT)
+• Decimales / Supply: no visibles en lo compartido (leer vía RPC antes de operar)
+• Notas de integración:
+• Añadir precios desde Raydium/Meteora.
+• Trackear holders top y concentración en el dashboard.
+⸻
+Tabla rápida (comparativa)
+Token Red Dirección Programa/Std Holders (aprox) Pools/DEX Datos faltantes a leer
+GS Solana A1keU...vbZ3w Token 2022 ~67 Dexlab (varios) decimals, supply
+KUCHI BSC 0x21b227...baa91 BEP-20 29* Pancake V2 (esperado) Pair principal y reserves
+VASER Solana FrsW6J...X1S SPL estándar ~78 Raydium LIPO, Meteora decimals, supply exactos
+* Holders de KUCHI según BscScan en la captura (puede variar).
+⸻
+Siguientes pasos automáticos (te los dejo listos si quieres)
+1. Backend Solana: endpoints para decimals/supply (GS y VASER) + balances por wallet (Phantom/
+Exodus).
+2. Backend BSC: endpoint KUCHI /kuchi/info y /kuchi/wallet/:addr (ya te pasé el módulo base).
+3. Bot:
+• /balance <wallet> → listados SPL + KUCHI.
+• /price GS|VASER|KUCHI → precios desde Dexlab/Raydium/Pancake (reserves→TWAP simple).
+4. Dashboard:
+• Card por token con: supply, holders, concentración top-10, pools activas, flags (Pause/Blacklist/
+Fee% en KUCHI), links a exploradores y logo desde uri.
+¿Quieres que los genere ahora mismo (código y endpoints) usando los mints/contrato anteriores y la
+wallet Phantom que compartiste? Quiero que análisis su puedo modificar él contralto con fines de
+integrar al,proyecto de panas token y telegram ton wallet ¡Lista la ficha técnica y el dictamen,
+Tonka! 👇
+Te dejo el informe comparativo + qué sí/qué no se puede modificar en cada token y cómo
+integrarlos con Panas Token y Telegram (TON) sin romper nada.
+GS (SMART GLOBAL TOKEN) — Solana (Token-2022)
+• Mint: A1keUDicm5qfjjpjwhabK5EqVtBkkcdWGVjDXMqvbZ3w
+• Nombre/Símbolo: SMART GLOBAL TOKEN / GS
+• Programa: Token-2022 (extensiones)
+• Metadata URI: https://gateway.irys.xyz/j9gTD1XOP8j3OXpJ_uMSvrQ3totPZ0J6ue6iceaRDxC
+• Update Authority/Creator: QLuFdP…t2PoD
+• Holders (captura): ~67
+• Pools: Dexlab (GS-Kuchi, GS-SOL, GS-USDC, PUGCOIN-GS)
+¿Qué puedes modificar?
+• Metadata (nombre, símbolo, imagen, links) → SÍ, si conservas la updateAuthority.
+• Supply/decimals/código del token → NO (inmutables tras el mint).
+• Extensiones Token-2022 → suelen quedar fijadas al crear; si no se definieron “configurables”, no
+cambian.
+⸻
+KUCHI (Kuchicoin) — BSC / BEP-20 (Solidity)
+• Contrato: 0x21b227d8085b4522805b6ad6c83…82068baa91 (completa checksum)
+• Decimals: 18 — Supply máx: 21,000,000
+• Mecánica: reflection (_taxFee), liquidez auto (_liquidityFee), dev fee (_devFee)
+• Controles owner: Pause, Blacklist (_isEnemy), cambiar fees, cambiar router
+¿Qué puedes modificar?
+• Parámetros (fees, pause, router, dev wallet, exenciones) → SÍ (owner).
+• Código / lógica → NO (no es proxy upgradeable).
+• Riesgos a exponer en dashboard: uso de tx.origin en onlyOwner, pause global, blacklist.
+⸻
+VASER TOKEN — Solana (SPL estándar)
+• Mint: FrsW6JC2Em2iEjNyKtEmFpw5jRdjcuZ1Gbx4kAK4xX1S
+• Nombre/Símbolo: VASER TOKEN / VASER
+• Metadata (Metaplex): updateAuthority: FMH8E4…YhH5, isMutable: true, royalties: 0
+• First Mint: 2025-03-16 23:58:55 UTC
+• Holders (captura): ~78, alta concentración
+• Pools: Raydium (LIPO-VASER), Meteora (VASER-USDT)
+¿Qué puedes modificar?
+• Metadata → SÍ, mientras exista updateAuthority y isMutable=1.
+• Supply/decimals/código del token → NO.
+⸻
+¿Puedo “modificar el contrato” para integrarlo con Panas Token y Telegram TON Wallet?
+Directamente, no.
+• Solana (GS/ VASER): no puedes cambiar la lógica del token ni los parámetros de mint; solo
+metadata (si eres updateAuthority).
+• BSC (KUCHI): puedes tocar parámetros (fees/pause/blacklist/router), no el bytecode.
+Entonces, ¿cómo los integramos sin modificar contratos?
+Opción A — Integración sin tocar on-chain (recomendada)
+1. Router off-chain (backend) que:
+• Detecta el activo que el usuario envía (GS, VASER, KUCHI).
+• Ejecuta swap en DEX (Dexlab/Raydium para Solana; Pancake para BSC).
+• Si el pago final debe ser Panas (SPL) o Jetton (TON), hace la conversión y deposita al receptor.
+2. Telegram (TON):
+• Usa TonConnect (Tonkeeper/Wallet) para firmar pagos en TON/Jettons.
+• Para pagos con GS/VASER/KUCHI, el bot genera una orden de pago y el router realiza el swap/
+bridge y confirma al bot.
+Opción B — Wrappers/bridges sin cambiar tokens
+• KUCHI-on-Solana (wKUCHI-SPL): contrato locker en BSC que bloquea KUCHI y emite SPL
+envuelto en Solana; ideal para parear con Panas.
+• GS/VASER-on-TON (Jetton envuelto): minter Jetton que emite 1:1 contra bloqueo en Solana.
+• Puedes usar Wormhole/deBridge/Allbridge o un bridge propio (lock-and-mint + oráculo/firma
+multisig).
+Opción C — Nueva versión de token (v2)
+• Si quieres capacidades nuevas (ej. permit, transfer hooks, per-account fees, etc.), despliegas v2 y
+haces migración con un contrato swap v1→v2.
+• No rompe el historial y evita tocar contratos ya desplegados.
+⸻
+Plan de acción concreto (plug-and-play)
+1. Backend
+• Solana SDK: @solana/web3.js + @solana/spl-token (Token-2022 para GS).
+• BSC: ethers@6.
+• Endpoints:
+• /prices/{GS|VASER|KUCHI} (lee reserves en pools).
+• /pay (orquesta swap + bridge + depósito final Panas/Jetton).
+• /kuchi/info y /kuchi/wallet/:addr (estado KUCHI: fees, pause, blacklist, etc.).
+2. Telegram (TON)
+• TonConnect UI para WebApp del bot (confirmación de pago en TON/Jetton).
+• Comandos: /pay, /swap, /balance.
+3. Dashboard
+• Fichas por token: supply, holders top, pools, flags (Pause/Blacklist/Fee% en KUCHI), links a
+exploradores, logo (desde uri).
+4. Bridge mínimo (si hace falta)
+• Locker KUCHI (BSC) → evento Locked(address user, uint256 amount, bytes32 solanaRecipient)
+• Minter SPL (Solana) → acuña wKUCHI al destinatario tras validar firmas del relayer multisig.
+⸻
+Recomendación final
+• No intentes “editar” contratos ya desplegados.
+• Integra vía router off-chain + DEX y, si necesitas cross-chain, usa wrapped tokens/bridge.
+• Aprovecha que GS/ VASER permiten actualizar metadata para alinear branding y enlaces del
+ecosistema Panas/Telegram TON.
+Si te parece, te dejo ya:
+• el endpoint /pay con flujo GS/VASER/KUCHI → Panas (SPL) o Jetton TON,
+• y un contrato locker mínimo para KUCHI (BSC) + script del minter SPL (wKUCHI) en Solana.
+¿Lo genero todo ahora mismo? Me disregard ese informe qué puedo hacer para qué él,proyecto qué
+hago ahora sea más creo le, se integre, no quiero XimeFer los,errores,con él,token qué creare y no
+quiero los Recuesos tie,lo qué invertimen estos tokens qué en si los holders son mis wallets,
+recuperate quenusaremos nfdomains
