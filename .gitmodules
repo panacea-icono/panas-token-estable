@@ -7,3 +7,15 @@
 [submodule "integrations/rea"]
   path = integrations/rea
   url = https://github.com/panacea-icono/panas-real-estate-tokenization.git
+[submodule "integrations/oracles"]
+  path = integrations/oracles
+  url = https://github.com/panacea-icono/panas-oracles-placeholder.git
+[submodule "tokens/vaser"]
+  path = tokens/vaser
+  url = https://github.com/panacea-icono/vaser-token-placeholder.git
+[submodule "tokens/kuchi"]
+  path = tokens/kuchi
+  url = https://github.com/panacea-icono/kuchi-token-placeholder.git
+[submodule "tokens/jetton-ton"]
+  path = tokens/jetton-ton
+  url = https://github.com/panacea-icono/ton-jetton-placeholder.git
