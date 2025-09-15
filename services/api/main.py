@@ -5,7 +5,13 @@ from typing import Dict, Any
 import json
 import os
 
+# Importar el router de webhooks
+from webhook_handler import router as webhook_router
+
 app = FastAPI(title="PANAS Index API")
+
+# Incluir el router de webhooks
+app.include_router(webhook_router)
 
 @app.get("/health")
 def health():

@@ -2,15 +2,26 @@
 
 ## 📊 Visión General
 
-PANAS es un **token índice estable multi-activo** implementado como Jetton en TON, respaldado por una canasta diversificada de activos digitales.
+PANAS es un **token índice estable multi-activo** que funciona como **ancla de poder adquisitivo** del trabajo médico y tecnológico, implementado como ASA en Algorand, respaldado por una canasta diversificada de servicios reales.
 
 ## 🎯 Objetivo
 
-Crear un índice estable que mantenga su valor a través de la diversificación en múltiples blockchains y tipos de activos.
+Crear un índice estable que preserve el **valor real del trabajo médico y tecnológico** a través del tiempo, independientemente de la inflación o fluctuaciones cambiarias, basándose en el poder adquisitivo de servicios reales.
 
 ## 📈 Composición del Índice
 
-### Activos Subyacentes
+### Canasta de Referencia (Servicios Reales)
+
+| Servicio | Tipo | Peso | Descripción | Unidad de Cuenta |
+|----------|------|------|-------------|------------------|
+| **Lipoescultura** | Procedimiento Médico | 40% | Cirugía estética de referencia | 1 procedimiento |
+| **Consulta Médica** | Servicio Médico | 25% | Consulta médica especializada | 1 consulta |
+| **Dataset IA Médica** | Servicio Tecnológico | 20% | Datos de investigación médica | 1 dataset |
+| **Stablecoin USD** | Reserva de Estabilidad | 15% | Reserva de liquidez | 1 USD |
+
+### Total: 100%
+
+### Activos de Respaldo (Multi-blockchain)
 
 | Activo | Blockchain | Tipo | Peso | Descripción |
 |--------|------------|------|------|-------------|
@@ -18,8 +29,6 @@ Crear un índice estable que mantenga su valor a través de la diversificación 
 | KUCHI | BSC | BEP20 | 25% | Token de utilidad |
 | NF Domains | Algorand | NFD Collection | 20% | Dominios NFT |
 | KuchiCoin NFTs | Solana | NFT Collection | 15% | Colección de NFTs |
-
-### Total: 100%
 
 ## ⚖️ Reglas de Rebalanceo
 

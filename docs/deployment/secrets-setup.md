@@ -62,6 +62,68 @@ siguientes secretos en tu repositorio de GitHub:
   Value: palabra1 palabra2 palabra3 ... palabra24
   ```
 
+### 4. **VERCEL_TOKEN** (Requerido para despliegue frontend)
+
+- **Descripción**: Token de API de Vercel para despliegues automáticos
+
+- **Cómo obtener**:
+
+  1. Ir a [Vercel Dashboard](https://vercel.com/dashboard)
+  2. Ir a Settings > Tokens
+  3. Crear nuevo token con permisos de deployment
+  4. Copiar el token generado
+
+- **Configuración**:
+
+  ```bash
+  # En GitHub: Settings > Secrets and variables > Actions
+  # Agregar nuevo secreto:
+  Name: VERCEL_TOKEN
+  Value: eIhe5OXfe9gq7SeUPHAD0Xpw
+  ```
+
+### 5. **VERCEL_WEBHOOK_TOKEN** (Requerido para webhooks)
+
+- **Descripción**: Token secreto para verificar webhooks de Vercel
+
+- **Cómo obtener**:
+
+  1. Usar el mismo token de Vercel o generar uno específico
+  2. Este token se usa para verificar la autenticidad de los webhooks
+  3. **⚠️ IMPORTANTE**: Mantener este token seguro
+
+- **Configuración**:
+
+  ```bash
+  # En GitHub: Settings > Secrets and variables > Actions
+  # Agregar nuevo secreto:
+  Name: VERCEL_WEBHOOK_TOKEN
+  Value: eIhe5OXfe9gq7SeUPHAD0Xpw
+  ```
+
+### 6. **VERCEL_ORG_ID** y **VERCEL_PROJECT_ID** (Requeridos para despliegue)
+
+- **Descripción**: IDs de organización y proyecto de Vercel
+
+- **Cómo obtener**:
+
+  1. Ir a [Vercel Dashboard](https://vercel.com/dashboard)
+  2. Seleccionar el proyecto panas-token-estable
+  3. Ir a Settings > General
+  4. Copiar Project ID y Organization ID
+
+- **Configuración**:
+
+  ```bash
+  # En GitHub: Settings > Secrets and variables > Actions
+  # Agregar nuevos secretos:
+  Name: VERCEL_ORG_ID
+  Value: tu_org_id_aqui
+  
+  Name: VERCEL_PROJECT_ID
+  Value: prj_8V2CEf88FXnIGzRNW88nnXe6dDAU
+  ```
+
 ## 🛠️ Cómo Configurar Secretos en GitHub
 
 ### Método 1: Interfaz Web de GitHub
@@ -86,6 +148,10 @@ gh auth login
 gh secret set SNYK_TOKEN --body "tu_token_aqui"
 gh secret set TESTNET_WALLET_MNEMONIC --body "tu_mnemonic_aqui"
 gh secret set MAINNET_WALLET_MNEMONIC --body "tu_mnemonic_aqui"
+gh secret set VERCEL_TOKEN --body "eIhe5OXfe9gq7SeUPHAD0Xpw"
+gh secret set VERCEL_WEBHOOK_TOKEN --body "eIhe5OXfe9gq7SeUPHAD0Xpw"
+gh secret set VERCEL_ORG_ID --body "tu_org_id_aqui"
+gh secret set VERCEL_PROJECT_ID --body "prj_8V2CEf88FXnIGzRNW88nnXe6dDAU"
 ```
 
 ### Método 3: API de GitHub
