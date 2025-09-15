@@ -1,0 +1,12 @@
+{
+  "name": "panas-token-static",
+  "version": "1.0.0",
+  "description": "PANAS Token Estable - Sitio Estático",
+  "scripts": {
+    "build": "echo 'Build completado - sitio estático'",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": ["panas", "token", "estable", "blockchain"],
+  "author": "Panacea Icono S.A.",
+  "license": "MIT"
+}

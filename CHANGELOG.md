@@ -9,6 +9,35 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.1.0] - 2025-09-15
+
+### Added
+
+- Nuevos assets y páginas para el DApp (Next.js y Vite)
+- Documentos de análisis y guías operativas en `docs/`
+- Scripts de despliegue y configuración de subdominios
+
+### Changed
+
+- Ajustes de estilos y layout en `frontend/dapp`
+- Actualización de dependencias y configuración de build
+
+### Fixed
+
+- Correcciones menores en documentación y variables de entorno de ejemplo
+
+### Added
+
 - Estructura inicial del proyecto
 - Configuración de Git y CI/CD
 - Documentación básica

@@ -1,0 +1,268 @@
+/* App.css - Estilos adicionales para la aplicación */
+
+/* Animaciones personalizadas */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px #34d399;
+  }
+  to {
+    box-shadow: 0 0 30px #22d3ee;
+  }
+}
+
+/* Efectos de glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Efectos de hover mejorados */
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(52, 211, 153, 0.3);
+}
+
+/* Transiciones suaves */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Efectos de texto */
+.text-gradient {
+  background: linear-gradient(135deg, #34d399, #22d3ee, #2dd4bf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Efectos 3D para texto */
+.text-3d-glow {
+  text-shadow: 
+    0 0 10px rgba(52, 211, 153, 0.8),
+    0 0 20px rgba(34, 211, 238, 0.6),
+    0 0 30px rgba(45, 212, 191, 0.4),
+    0 0 40px rgba(52, 211, 153, 0.2),
+    0 0 50px rgba(34, 211, 238, 0.1);
+  transform: perspective(1000px) rotateX(10deg) rotateY(-5deg);
+  animation: text3dFloat 4s ease-in-out infinite;
+}
+
+.text-3d-subtitle {
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 6px 12px rgba(0, 0, 0, 0.2);
+  transform: perspective(1000px) rotateX(5deg);
+}
+
+.text-3d-header {
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 3px 6px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: perspective(800px) rotateX(8deg);
+}
+
+.text-3d-card {
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: perspective(600px) rotateX(3deg);
+}
+
+/* Animaciones 3D */
+@keyframes text3dFloat {
+  0%, 100% {
+    transform: perspective(1000px) rotateX(10deg) rotateY(-5deg) translateY(0px);
+  }
+  50% {
+    transform: perspective(1000px) rotateX(8deg) rotateY(-3deg) translateY(-5px);
+  }
+}
+
+@keyframes text3dPulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 10px rgba(52, 211, 153, 0.8),
+      0 0 20px rgba(34, 211, 238, 0.6),
+      0 0 30px rgba(45, 212, 191, 0.4);
+  }
+  50% {
+    text-shadow: 
+      0 0 20px rgba(52, 211, 153, 1),
+      0 0 30px rgba(34, 211, 238, 0.8),
+      0 0 40px rgba(45, 212, 191, 0.6);
+  }
+}
+
+/* Animaciones de partículas */
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-10px) translateX(-10px);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translateY(-30px) translateX(5px);
+    opacity: 0.9;
+  }
+}
+
+@keyframes connectionPulse {
+  0%, 100% {
+    opacity: 0.1;
+    stroke-width: 1;
+  }
+  50% {
+    opacity: 0.3;
+    stroke-width: 2;
+  }
+}
+
+/* Efectos de glassmorphism mejorados */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(52, 211, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-5px);
+}
+
+/* Efectos de gradiente animado */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #34d399, #22d3ee, #2dd4bf, #10b981);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+/* Efectos de hover mejorados */
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(52, 211, 153, 0.4),
+    0 0 40px rgba(34, 211, 238, 0.2),
+    0 0 60px rgba(45, 212, 191, 0.1);
+  transform: scale(1.05);
+}
+
+/* Efectos de texto brillante */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Efectos de partículas */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #34d399;
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .text-9xl {
+    font-size: 4rem;
+  }
+  
+  .text-8xl {
+    font-size: 3.5rem;
+  }
+  
+  .text-7xl {
+    font-size: 3rem;
+  }
+}
+
+/* Efectos de scroll */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Efectos de focus */
+.focus-ring:focus {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+/* Efectos de loading */
+.loading-spinner {
+  border: 2px solid rgba(52, 211, 153, 0.3);
+  border-top: 2px solid #34d399;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
